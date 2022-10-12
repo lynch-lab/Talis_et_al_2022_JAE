@@ -1,0 +1,3180 @@
+---
+title: "Age-Structured Simulation Plots - Gaussian Inputs"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, echo = FALSE, message = FALSE, warning = FALSE}
+library(printr)
+library(dplyr)
+library(ggplot2)
+library(QRM)
+library(tidyverse)
+library("metRology")
+library(fitdistrplus)
+library(LaplacesDemon)
+library(scales)
+library(grid)
+library(gridExtra)
+library(reshape2)
+library(metR)
+library(ggpubr)
+library(patchwork)
+library(latex2exp)
+```
+
+
+```{r load, echo = FALSE}
+load("../Agestructured_simulations_data.RData")
+```
+
+
+```{r calc_growth, echo = FALSE}
+
+num_steps <- 15 # number of steps / values of sigma for each demographic parameter
+
+# BOUND ON SIGMA
+sigma_steps <- seq(0.001, 0.1, length.out = num_steps+2)[2:(num_steps+1)]
+
+num_runs_each <- 10
+
+num_years_sim <- dim(B_total)[6]
+
+
+Growth <- array(NA, dim = c(num_steps, num_steps, num_steps, num_steps, num_runs_each, num_years_sim))
+for (h in 1:num_steps){
+  for (i in 1:num_steps){
+    for (j in 1:num_steps){
+      for (k in 1:num_steps){
+        for (iter in 1:num_runs_each){
+          for (yr in 2:num_years_sim){
+            Growth[h,i,j,k,iter,yr] <- log(B_total[h,i,j,k,iter,yr]/B_total[h,i,j,k,iter,yr-1])
+          }
+        }
+      }
+    }
+  }
+}
+
+Growth_true <- array(NA, dim = c(num_steps, num_steps, num_steps, num_steps, num_runs_each, num_years_sim))
+for (h in 1:num_steps){
+  for (i in 1:num_steps){
+    for (j in 1:num_steps){
+      for (k in 1:num_steps){
+        for (iter in 1:num_runs_each){
+          for (yr in 2:num_years_sim){
+            Growth_true[h,i,j,k,iter,yr] <- log(N_adults_total[h,i,j,k,iter,yr]/N_adults_total[h,i,j,k,iter,yr-1])
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+
+## Abundance vs. Demographic Parameters
+
+#### High variation in all parameters (e.g. [15,15,15,15,,])
+```{r high1, echo=FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+plot(r_realized[15,15,15,15,,], B_total[15,15,15,15,,], main = "Abundance vs r", pch = 19, col = alpha("darkseagreen4", 0.40))
+plot(s_juv_realized[15,15,15,15,,], B_total[15,15,15,15,,], main = "Abundance vs s_juv", pch = 19, col = alpha("deeppink", 0.40))
+plot(s_ad_realized[15,15,15,15,,], B_total[15,15,15,15,,], main = "Abundance vs s_ad", pch = 19, col = alpha("gold3", 0.40))
+plot(b_realized[15,15,15,15,,], B_total[15,15,15,15,,], main = "Abundance vs b", pch = 19, col = alpha("blue", 0.40))
+```
+
+```{r df_high1, echo = FALSE}
+
+df <- data.frame(B=c(B_total[15,15,15,15,,]), r=c(r_realized[15,15,15,15,,]), s_juv=c(s_juv_realized[15,15,15,15,,]), s_ad=c(s_ad_realized[15,15,15,15,,]), b=c(b_realized[15,15,15,15,,]))
+
+model_r <- lm(B~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+
+options(digits = 3)
+x <- matrix(c("(e.g. [15,15,15,15,,])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+
+```{r gg_high1, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"*"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_allhigh_norm.pdf", plot = arrange)
+```
+
+
+
+
+```{r df_high1_growth, echo = FALSE}
+
+df <- data.frame(G=c(Growth[15,15,15,15,,]), r=c(r_realized[15,15,15,15,,]), s_juv=c(s_juv_realized[15,15,15,15,,]), s_ad=c(s_ad_realized[15,15,15,15,,]), b=c(b_realized[15,15,15,15,,]))
+
+model_r <- lm(G~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+
+options(digits = 3)
+x <- matrix(c("(e.g. [15,15,15,15,,])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+
+```{r gg_high1_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_allhigh_norm.pdf", plot = arrange)
+```
+
+
+
+
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+```{r high2, echo=FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+plot(r_realized[15,1,1,1,,], B_total[15,1,1,1,,], main = "Abundance vs r", pch = 19, col = alpha("darkseagreen4", 0.40))
+plot(s_juv_realized[1,15,1,1,,], B_total[1,15,1,1,,], main = "Abundance vs s_juv", pch = 19, col = alpha("deeppink", 0.40))
+plot(s_ad_realized[1,1,15,1,,], B_total[1,1,15,1,,], main = "Abundance vs s_ad", pch = 19, col = alpha("gold3", 0.40))
+plot(b_realized[1,1,1,15,,], B_total[1,1,1,15,,], main = "Abundance vs b", pch = 19, col = alpha("blue", 0.40))
+```
+
+```{r df_high2, echo = FALSE}
+df <- data.frame(B_r=c(B_total[15,1,1,1,,]), B_s_juv=c(B_total[1,15,1,1,,]), B_s_ad=c(B_total[1,1,15,1,,]), B_b=c(B_total[1,1,1,15,,]), r=c(r_realized[15,1,1,1,,]), s_juv=c(s_juv_realized[1,15,1,1,,]), s_ad=c(s_ad_realized[1,1,15,1,,]), b=c(b_realized[1,1,1,15,,]))
+
+model_r <- lm(B_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+options(digits = 3)
+x <- matrix(c("(e.g. [15,1,1,1,,])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+```{r gg_high2, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_nolag_norm.pdf", plot = arrange)
+```
+
+
+
+
+
+```{r df_high2_growth, echo = FALSE}
+df <- data.frame(G_r=c(Growth[15,1,1,1,,]), G_s_juv=c(Growth[1,15,1,1,,]), G_s_ad=c(Growth[1,1,15,1,,]), G_b=c(Growth[1,1,1,15,,]), r=c(r_realized[15,1,1,1,,]), s_juv=c(s_juv_realized[1,15,1,1,,]), s_ad=c(s_ad_realized[1,1,15,1,,]), b=c(b_realized[1,1,1,15,,]))
+
+model_r <- lm(G_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+options(digits = 3)
+x <- matrix(c("(e.g. [15,1,1,1,,])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+```{r gg_high2_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-.6,0.6) + xlim(0.5, 1) +ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-.6,0.6) + xlim(0.5, 1) +ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_nolag_norm.pdf", plot = arrange)
+```
+
+
+
+#### Low/no variation in all parameters (e.g. [1,1,1,1,,])
+```{r low, echo=FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+plot(r_realized[1,1,1,1,,], B_total[1,1,1,1,,], main = "Abundance vs r", pch = 19, col = alpha("darkseagreen4", 0.40))
+plot(s_juv_realized[1,1,1,1,,], B_total[1,1,1,1,,], main = "Abundance vs s_juv", pch = 19, col = alpha("deeppink", 0.40))
+plot(s_ad_realized[1,1,1,1,,], B_total[1,1,1,1,,], main = "Abundance vs s_ad", pch = 19, col = alpha("gold3", 0.40))
+plot(b_realized[1,1,1,1,,], B_total[1,1,1,1,,], main = "Abundance vs b", pch = 19, col = alpha("blue", 0.40))
+```
+
+```{r df_low, echo = FALSE}
+df <- data.frame(B=c(B_total[1,1,1,1,,]), r=c(r_realized[1,1,1,1,,]), s_juv=c(s_juv_realized[1,1,1,1,,]), s_ad=c(s_ad_realized[1,1,1,1,,]), b=c(b_realized[1,1,1,1,,]))
+
+model_r <- lm(B~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+options(digits = 3)
+x <- matrix(c("(e.g. [1,1,1,1,,])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+## Abundance vs. Lagged Demographic Parameters
+
+### 1-Year Lag
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+```{r lag1, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+plot(r_realized[15,1,1,1,,1:78], B_total[15,1,1,1,,2:79], main = "Abundance vs r", pch = 19, col = alpha("darkseagreen4", 0.40))
+plot(s_juv_realized[1,15,1,1,,1:78], B_total[1,15,1,1,,2:79], main = "Abundance vs s_juv", pch = 19, col = alpha("deeppink", 0.40))
+plot(s_ad_realized[1,1,15,1,,1:78], B_total[1,1,15,1,,2:79], main = "Abundance vs s_ad", pch = 19, col = alpha("gold3", 0.40))
+plot(b_realized[1,1,1,15,,1:78], B_total[1,1,1,15,,2:79], main = "Abundance vs b", pch = 19, col = alpha("blue", 0.40))
+```
+
+```{r df_lag1, echo = FALSE}
+df <- data.frame(B_r=c(B_total[15,1,1,1,,2:79]), B_s_juv=c(B_total[1,15,1,1,,2:79]), B_s_ad=c(B_total[1,1,15,1,,2:79]), B_b=c(B_total[1,1,1,15,,2:79]), r=c(r_realized[15,1,1,1,,1:78]), s_juv=c(s_juv_realized[1,15,1,1,,1:78]), s_ad=c(s_ad_realized[1,1,15,1,,1:78]), b=c(b_realized[1,1,1,15,,1:78]))
+
+model_r <- lm(B_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+options(digits = 3)
+x <- matrix(c("(e.g. [15,1,1,1,,1-year lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+```{r gg_lagged1, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation (1 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_1yrlag_norm.pdf", plot = arrange)
+```
+
+
+```{r df_lag1_growth, echo = FALSE}
+df <- data.frame(G_r=c(Growth[15,1,1,1,,2:79]), G_s_juv=c(Growth[1,15,1,1,,2:79]), G_s_ad=c(Growth[1,1,15,1,,2:79]), G_b=c(Growth[1,1,1,15,,2:79]), r=c(r_realized[15,1,1,1,,1:78]), s_juv=c(s_juv_realized[1,15,1,1,,1:78]), s_ad=c(s_ad_realized[1,1,15,1,,1:78]), b=c(b_realized[1,1,1,15,,1:78]))
+
+model_r <- lm(G_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+options(digits = 3)
+x <- matrix(c("(e.g. [15,1,1,1,,1-year lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+```{r gg_lagged1_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (1 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_1yrlag_norm.pdf", plot = arrange)
+```
+
+
+
+### 2-Year Lag
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+```{r lag2, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+plot(r_realized[15,1,1,1,,1:77], B_total[15,1,1,1,,3:79], main = "Abundance vs r", pch = 19, col = alpha("darkseagreen4", 0.40))
+plot(s_juv_realized[1,15,1,1,,1:77], B_total[1,15,1,1,,3:79], main = "Abundance vs s_juv", pch = 19, col = alpha("deeppink", 0.40))
+plot(s_ad_realized[1,1,15,1,,1:77], B_total[1,1,15,1,,3:79], main = "Abundance vs s_ad", pch = 19, col = alpha("gold3", 0.40))
+plot(b_realized[1,1,1,15,,1:77], B_total[1,1,1,15,,3:79], main = "Abundance vs b", pch = 19, col = alpha("blue", 0.40))
+```
+
+```{r df_lag2, echo = FALSE}
+df <- data.frame(B_r=c(B_total[15,1,1,1,,3:79]), B_s_juv=c(B_total[1,15,1,1,,3:79]), B_s_ad=c(B_total[1,1,15,1,,3:79]), B_b=c(B_total[1,1,1,15,,3:79]), r=c(r_realized[15,1,1,1,,1:77]), s_juv=c(s_juv_realized[1,15,1,1,,1:77]), s_ad=c(s_ad_realized[1,1,15,1,,1:77]), b=c(b_realized[1,1,1,15,,1:77]))
+
+model_r <- lm(B_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,2-year lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged2, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation (2 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_2yrlag_norm.pdf", plot = arrange)
+```
+
+
+```{r df_lag2_growth, echo = FALSE}
+df <- data.frame(G_r=c(Growth[15,1,1,1,,3:79]), G_s_juv=c(Growth[1,15,1,1,,3:79]), G_s_ad=c(Growth[1,1,15,1,,3:79]), G_b=c(Growth[1,1,1,15,,3:79]), r=c(r_realized[15,1,1,1,,1:77]), s_juv=c(s_juv_realized[1,15,1,1,,1:77]), s_ad=c(s_ad_realized[1,1,15,1,,1:77]), b=c(b_realized[1,1,1,15,,1:77]))
+
+model_r <- lm(G_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,2-year lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged2_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (2 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_2yrlag_norm.pdf", plot = arrange)
+```
+
+
+### 3-Year Lag
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+
+```{r df_lag3, echo = FALSE}
+df <- data.frame(B_r=c(B_total[15,1,1,1,,4:79]), B_s_juv=c(B_total[1,15,1,1,,4:79]), B_s_ad=c(B_total[1,1,15,1,,4:79]), B_b=c(B_total[1,1,1,15,,4:79]), r=c(r_realized[15,1,1,1,,1:76]), s_juv=c(s_juv_realized[1,15,1,1,,1:76]), s_ad=c(s_ad_realized[1,1,15,1,,1:76]), b=c(b_realized[1,1,1,15,,1:76]))
+
+model_r <- lm(B_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,3-year lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged3, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"*"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob(""))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_3yrlag_norm.pdf", plot = arrange)
+```
+
+
+```{r df_lag3_growth, echo = FALSE}
+df <- data.frame(G_r=c(Growth[15,1,1,1,,4:79]), G_s_juv=c(Growth[1,15,1,1,,4:79]), G_s_ad=c(Growth[1,1,15,1,,4:79]), G_b=c(Growth[1,1,1,15,,4:79]), r=c(r_realized[15,1,1,1,,1:76]), s_juv=c(s_juv_realized[1,15,1,1,,1:76]), s_ad=c(s_ad_realized[1,1,15,1,,1:76]), b=c(b_realized[1,1,1,15,,1:76]))
+
+model_r <- lm(G_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,3-year lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged3_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (3 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_3yrlag_norm.pdf", plot = arrange)
+```
+
+
+### 4-Year Lag
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+
+```{r df_lag4, echo = FALSE}
+df <- data.frame(B_r=c(B_total[15,1,1,1,,5:79]), B_s_juv=c(B_total[1,15,1,1,,5:79]), B_s_ad=c(B_total[1,1,15,1,,5:79]), B_b=c(B_total[1,1,1,15,,5:79]), r=c(r_realized[15,1,1,1,,1:75]), s_juv=c(s_juv_realized[1,15,1,1,,1:75]), s_ad=c(s_ad_realized[1,1,15,1,,1:75]), b=c(b_realized[1,1,1,15,,1:75]))
+
+model_r <- lm(B_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,4-year lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged4, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation (4 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_4yrlag_norm.pdf", plot = arrange)
+```
+
+
+```{r df_lag4_growth, echo = FALSE}
+df <- data.frame(G_r=c(Growth[15,1,1,1,,5:79]), G_s_juv=c(Growth[1,15,1,1,,5:79]), G_s_ad=c(Growth[1,1,15,1,,5:79]), G_b=c(Growth[1,1,1,15,,5:79]), r=c(r_realized[15,1,1,1,,1:75]), s_juv=c(s_juv_realized[1,15,1,1,,1:75]), s_ad=c(s_ad_realized[1,1,15,1,,1:75]), b=c(b_realized[1,1,1,15,,1:75]))
+
+model_r <- lm(G_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,4-year lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged4_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (4 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_4yrlag_norm.pdf", plot = arrange)
+```
+
+
+
+### 5-Year Lag
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+
+```{r df_lag5, echo = FALSE}
+df <- data.frame(B_r=c(B_total[15,1,1,1,,6:79]), B_s_juv=c(B_total[1,15,1,1,,6:79]), B_s_ad=c(B_total[1,1,15,1,,6:79]), B_b=c(B_total[1,1,1,15,,6:79]), r=c(r_realized[15,1,1,1,,1:74]), s_juv=c(s_juv_realized[1,15,1,1,,1:74]), s_ad=c(s_ad_realized[1,1,15,1,,1:74]), b=c(b_realized[1,1,1,15,,1:74]))
+
+model_r <- lm(B_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,5-year lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged5, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation (5 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_5yrlag_norm.pdf", plot = arrange)
+```
+
+
+```{r df_lag5_growth, echo = FALSE}
+df <- data.frame(G_r=c(Growth[15,1,1,1,,6:79]), G_s_juv=c(Growth[1,15,1,1,,6:79]), G_s_ad=c(Growth[1,1,15,1,,6:79]), G_b=c(Growth[1,1,1,15,,6:79]), r=c(r_realized[15,1,1,1,,1:74]), s_juv=c(s_juv_realized[1,15,1,1,,1:74]), s_ad=c(s_ad_realized[1,1,15,1,,1:74]), b=c(b_realized[1,1,1,15,,1:74]))
+
+model_r <- lm(G_r~r, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1,5-year lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged5_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (5 yr lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_5yrlag_norm.pdf", plot = arrange)
+```
+
+
+### Varied Lags
+
+#### High variation in all parameters (e.g. [15,15,15,15,,])
+
+
+```{r df_lag_vary_abundance_allhigh, echo = FALSE}
+df_r <- data.frame(B_r=c(B_total[15,15,15,15,,5:79]), r=c(r_realized[15,15,15,15,,1:75]))
+df_s_juv <- data.frame(B_s_juv=c(B_total[15,15,15,15,,4:79]), s_juv=c(s_juv_realized[15,15,15,15,,1:76]))
+df_s_ad <- data.frame(B_s_ad=c(B_total[15,15,15,15,,2:79]), s_ad=c(s_ad_realized[15,15,15,15,,1:78]))
+df_b <- data.frame(B_b=c(B_total[15,15,15,15,,]), b=c(b_realized[15,15,15,15,,]))
+
+model_r <- lm(B_r~r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df_s_juv)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df_s_ad)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df_b)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,15,15,15, Varied lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged_vary_abundance_allhigh, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df_r, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance(t)") + xlab("r(t-4)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+p2 <- ggplot(df_s_juv, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") + xlab("s_juv(t-3)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+p3 <- ggplot(df_s_ad, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance(t)") + xlab("s_ad(t-1)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+p4 <- ggplot(df_b, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") + xlab("b(t)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"*"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation (Varied lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange 
+
+ggsave(filename="images/scatter_abundance_variedlag_allhigh_norm.pdf", plot = arrange)
+```
+
+
+```{r abundance_observed_true_scatter_allhigh, echo = FALSE}
+df_r <- data.frame(G_r=c(B_total[15,15,15,15,,]), True_r=c(N_adults_total[15,15,15,15,,]))
+
+model_r <- lm(True_r~G_r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+MAPE_r <- round(mean(abs((df_r$True_r-df_r$G_r)/df_r$True_r)) * 100,1)
+
+ggplot(df_r, aes(x=G_r, y=True_r)) +
+  geom_point(color = "#638475") +
+  ylim(1e5,14e5) + xlim(1e5,11e5) + ylab("True Abundance(t)") + xlab("Observed Abundance(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+```
+
+
+```{r df_lag_vary_growth_allhigh, echo = FALSE}
+df_r <- data.frame(G_r=c(Growth[15,15,15,15,,5:79]), r=c(r_realized[15,15,15,15,,1:75]))
+df_s_juv <- data.frame(G_s_juv=c(Growth[15,15,15,15,,4:79]), s_juv=c(s_juv_realized[15,15,15,15,,1:76]))
+df_s_ad <- data.frame(G_s_ad=c(Growth[15,15,15,15,,2:79]), s_ad=c(s_ad_realized[15,15,15,15,,1:78]))
+df_b <- data.frame(G_b=c(Growth[15,15,15,15,,]), b=c(b_realized[15,15,15,15,,]))
+
+model_r <- lm(G_r~r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df_s_juv)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df_s_ad)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df_b)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,15,15,15, Varied lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged_vary_growth_allhigh, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df_r, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth(t)") + xlab("r(t-4)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r,"*"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df_s_juv, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") + xlab("s_juv(t-3)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df_s_ad, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth(t)") + xlab("s_ad(t-1)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df_b, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") + xlab("b(t)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (Varied lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_variedlag_allhigh_norm.pdf", plot = arrange)
+```
+
+```{r growth_observed_true_scatter_allhigh, echo = FALSE}
+df_r <- data.frame(G_r=c(Growth[15,15,15,15,,]), True_r=c(Growth_true[15,15,15,15,,]))
+
+model_r <- lm(True_r~G_r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+MAPE_r <- round(mean(abs((df_r$True_r-df_r$G_r)/df_r$True_r), na.rm = TRUE) * 100,1)
+
+ggplot(df_r, aes(x=G_r, y=True_r)) +
+  geom_point(color = "#638475") +
+  ylim(-0.6,0.6) + xlim(-0.6,0.6) + ylab("True Growth(t)") + xlab("Observed Growth(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+
+```
+
+
+
+
+#### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+
+```{r df_lag_vary_abundance, echo = FALSE}
+df_r <- data.frame(B_r=c(B_total[15,1,1,1,,5:79]), r=c(r_realized[15,1,1,1,,1:75]))
+df_s_juv <- data.frame(B_s_juv=c(B_total[1,15,1,1,,4:79]), s_juv=c(s_juv_realized[1,15,1,1,,1:76]))
+df_s_ad <- data.frame(B_s_ad=c(B_total[1,1,15,1,,2:79]), s_ad=c(s_ad_realized[1,1,15,1,,1:78]))
+df_b <- data.frame(B_b=c(B_total[1,1,1,15,,]), b=c(b_realized[1,1,1,15,,]))
+
+model_r <- lm(B_r~r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_s_juv~s_juv, data=df_s_juv)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_s_ad~s_ad, data=df_s_ad)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_b~b, data=df_b)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1, Varied lag])", "Abundance vs r", "Abundance vs s_juv", "Abundance vs s_ad", "Abundance vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged_vary_abundance, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df_r, aes(x=r, y=B_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance(t)") + xlab("r(t-4)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+p2 <- ggplot(df_s_juv, aes(x=s_juv, y=B_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.3, 0.85) + ylab("") + xlab("s_juv(t-3)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"*"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+p3 <- ggplot(df_s_ad, aes(x=s_ad, y=B_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("Abundance(t)") + xlab("s_ad(t-1)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+p4 <- ggplot(df_b, aes(x=b, y=B_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  #ylim(2e5,12e5) +
+  xlim(0.5, 1) + ylab("") + xlab("b(t)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10)))) + theme(text = element_text(size = 10))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. Demographic Parameters w/ Gaussian Variation (Varied lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange 
+
+ggsave(filename="images/scatter_abundance_variedlag_norm.pdf", plot = arrange)
+```
+
+
+```{r abundance_observed_true_scatter, echo = FALSE}
+df_r <- data.frame(G_r=c(B_total[15,1,1,1,,]), True_r=c(N_adults_total[15,1,1,1,,]))
+df_s_juv <- data.frame(G_s_juv=c(B_total[1,15,1,1,,]), True_s_juv=c(N_adults_total[1,15,1,1,,]))
+df_s_ad <- data.frame(G_s_ad=c(B_total[1,1,15,1,,]), True_s_ad=c(N_adults_total[1,1,15,1,,]))
+df_b <- data.frame(G_b=c(B_total[1,1,1,15,,]), True_b=c(N_adults_total[1,1,1,15,,]))
+
+model_r <- lm(True_r~G_r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(True_s_juv~G_s_juv, data=df_s_juv)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(True_s_ad~G_s_ad, data=df_s_ad)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(True_b~G_b, data=df_b)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+MAPE_r <- round(mean(abs((df_r$True_r-df_r$G_r)/df_r$True_r)) * 100,1)
+MAPE_s_juv <- round(mean(abs((df_s_juv$True_s_juv-df_s_juv$G_s_juv)/df_s_juv$True_s_juv)) * 100,1)
+MAPE_s_ad <- round(mean(abs((df_s_ad$True_s_ad-df_s_ad$G_s_ad)/df_s_ad$True_s_ad)) * 100,1)
+MAPE_b <- round(mean(abs((df_b$True_b-df_b$G_b)/df_b$True_b)) * 100,1)
+
+p1 <- ggplot(df_r, aes(x=G_r, y=True_r)) +
+  geom_point(color = "#638475") +
+  ylim(1e5,14e5) + xlim(1e5,11e5) + ylab("True Abundance(t)") + xlab("Observed Abundance(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df_s_juv, aes(x=G_s_juv, y=True_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylim(1e5,14e5) + xlim(1e5,11e5) + ylab("True Abundance(t)") + xlab("Observed Abundance(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df_s_ad, aes(x=G_s_ad, y=True_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylim(1e5,14e5) + xlim(1e5,11e5) + ylab("True Abundance(t)") + xlab("Observed Abundance(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df_b, aes(x=G_b, y=True_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylim(1e5,14e5) + xlim(1e5,11e5) + ylab("True Abundance(t)") + xlab("Observed Abundance(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_true_norm.pdf", plot = arrange)
+```
+
+
+
+
+```{r df_lag_vary_growth, echo = FALSE}
+df_r <- data.frame(G_r=c(Growth[15,1,1,1,,5:79]), r=c(r_realized[15,1,1,1,,1:75]))
+df_s_juv <- data.frame(G_s_juv=c(Growth[1,15,1,1,,4:79]), s_juv=c(s_juv_realized[1,15,1,1,,1:76]))
+df_s_ad <- data.frame(G_s_ad=c(Growth[1,1,15,1,,2:79]), s_ad=c(s_ad_realized[1,1,15,1,,1:78]))
+df_b <- data.frame(G_b=c(Growth[1,1,1,15,,]), b=c(b_realized[1,1,1,15,,]))
+
+model_r <- lm(G_r~r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_s_juv~s_juv, data=df_s_juv)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_s_ad~s_ad, data=df_s_ad)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_b~b, data=df_b)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("(e.g. [15,1,1,1, Varied lag])", "Growth vs r", "Growth vs s_juv", "Growth vs s_ad", "Growth vs b", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+```{r gg_lagged_vary_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df_r, aes(x=r, y=G_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth(t)") + xlab("r(t-4)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df_s_juv, aes(x=s_juv, y=G_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.3, 0.85) + ylab("") + xlab("s_juv(t-3)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df_s_ad, aes(x=s_ad, y=G_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("Growth(t)") + xlab("s_ad(t-1)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df_b, aes(x=b, y=G_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylim(-0.6,0.6) + xlim(0.5, 1) + ylab("") + xlab("b(t)") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. Demographic Parameters w/ Gaussian Variation (Varied lag)", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_variedlag_norm.pdf", plot = arrange)
+```
+
+```{r growth_observed_true_scatter, echo = FALSE}
+df_r <- data.frame(G_r=c(Growth[15,1,1,1,,]), True_r=c(Growth_true[15,1,1,1,,]))
+df_s_juv <- data.frame(G_s_juv=c(Growth[1,15,1,1,,]), True_s_juv=c(Growth_true[1,15,1,1,,]))
+df_s_ad <- data.frame(G_s_ad=c(Growth[1,1,15,1,,]), True_s_ad=c(Growth_true[1,1,15,1,,]))
+df_b <- data.frame(G_b=c(Growth[1,1,1,15,,]), True_b=c(Growth_true[1,1,1,15,,]))
+
+model_r <- lm(True_r~G_r, data=df_r)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(True_s_juv~G_s_juv, data=df_s_juv)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(True_s_ad~G_s_ad, data=df_s_ad)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(True_b~G_b, data=df_b)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+MAPE_r <- round(mean(abs((df_r$True_r-df_r$G_r)/df_r$True_r), na.rm = TRUE) * 100,1)
+MAPE_s_juv <- round(mean(abs((df_s_juv$True_s_juv-df_s_juv$G_s_juv)/df_s_juv$True_s_juv), na.rm = TRUE) * 100,1)
+MAPE_s_ad <- round(mean(abs((df_s_ad$True_s_ad-df_s_ad$G_s_ad)/df_s_ad$True_s_ad), na.rm = TRUE) * 100,1)
+MAPE_b <- round(mean(abs((df_b$True_b-df_b$G_b)/df_b$True_b), na.rm = TRUE) * 100,1)
+
+p1 <- ggplot(df_r, aes(x=G_r, y=True_r)) +
+  geom_point(color = "#638475") +
+  ylim(-0.6,0.6) + xlim(-0.6,0.6) + ylab("True Growth(t)") + xlab("Observed Growth(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df_s_juv, aes(x=G_s_juv, y=True_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylim(-0.6,0.6) + xlim(-0.6,0.6) + ylab("True Growth(t)") + xlab("Observed Growth(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df_s_ad, aes(x=G_s_ad, y=True_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylim(-0.6,0.6) + xlim(-0.6,0.6) + ylab("True Growth(t)") + xlab("Observed Growth(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df_b, aes(x=G_b, y=True_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylim(-0.6,0.6) + xlim(-0.6,0.6) + ylab("True Growth(t)") + xlab("Observed Growth(t)") +
+  annotation_custom(grobTree(textGrob(paste("MAPE =",MAPE_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_true_norm.pdf", plot = arrange)
+```
+
+
+
+## Abundance vs. Variation in Demographic Parameters
+
+```{r df_abund_sd, echo = FALSE}
+
+B_vs_sd_r <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    B_vs_sd_r[i,j,] <- B_total[i,1,1,1,j,]
+  }
+}
+
+B_vs_sd_s_juv <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    B_vs_sd_s_juv[i,j,] <- B_total[1,i,1,1,j,]
+  }
+}
+
+
+B_vs_sd_s_ad <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    B_vs_sd_s_ad[i,j,] <- B_total[1,1,i,1,j,]
+  }
+}
+
+
+B_vs_sd_b <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    B_vs_sd_b[i,j,] <- B_total[1,1,1,i,j,]
+  }
+}
+
+
+all_sigs_big <- rep(sigma_steps, num_runs_each*num_years_sim)
+df <- data.frame(sigmas = all_sigs_big, B_vs_sd_r = melt(B_vs_sd_r)$value, B_vs_sd_s_juv = melt(B_vs_sd_s_juv)$value, B_vs_sd_s_ad = melt(B_vs_sd_s_ad)$value, B_vs_sd_b = melt(B_vs_sd_b)$value)
+
+model_r <- lm(B_vs_sd_r~sigmas, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(B_vs_sd_s_juv~sigmas, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(B_vs_sd_s_ad~sigmas, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(B_vs_sd_b~sigmas, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+```
+
+
+```{r gg_abund_sd, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=sigmas, y=B_vs_sd_r)) +
+  geom_point(color = "#638475") +
+  ylim(2e3,12e5) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=sigmas, y=B_vs_sd_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylim(2e3,12e5) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"*"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=sigmas, y=B_vs_sd_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylim(2e3,12e5) + ylab("Growth") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=sigmas, y=B_vs_sd_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylim(2e3,12e5) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Abundance vs. sd(Demographic Parameters) w/ Gaussian Variation", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_abundance_sd_norm.pdf", plot = arrange)
+```
+
+### ANOVA: Low variance in s_ad [1,1,1,1,,] vs. High variance in s_ad [1,1,15,1,,] (Abundance)
+```{r anova_s_ad_prep_, echo = FALSE, fig.align = "center"}
+two_steps_mat <- matrix(rep(1:2,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 2))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- mean(B_total[1,1,1,1,n,])
+  anova_B[n,2] <- mean(B_total[1,1,15,1,n,])
+}
+plot(two_steps_mat, anova_B, main = "mean(Abundance) for low, high sd(s_ad)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:2, labels=c("[1,1,1,1,,]", "[1,1,15,1,,]"))
+
+```
+
+##### No significant difference between mean(mean(Abundance)) for low & high sd(s_ad)
+```{r anova_low_high_s_ad, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df[nrow(anova_df) + 1, ] <- c(1, anova_B[n,1])
+  anova_df[nrow(anova_df) + 1, ] <- c(2, anova_B[n,2])
+}
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df)
+summary(anova_oneway)
+```
+
+
+```{r ANOVA_s_ad_sd_gg, echo = FALSE, fig.align = "center"}
+ggplot(anova_df, aes(sd_param_id, sd_B, group = sd_param_id)) + 
+  geom_boxplot(width = 0.4, fill = "#7B8CDE", notch = FALSE) + xlab("sd(s_ad)") + ylab("Mean(Abundance)") + scale_x_continuous(breaks=c(1,2), labels = c("0.001", "0.1")) + labs(title = "Mean(Abundance), s_ad variation low vs. high")
+
+ggsave(filename="images/anova_abundance_sd_norm.pdf", plot = last_plot())
+```
+
+
+### ANOVA: Low variance in s_ad [1,1,1,1,,] vs. High variance in s_ad [1,1,15,1,,] (Growth)
+```{r anova_s_ad_prep_growth, echo = FALSE, fig.align = "center"}
+two_steps_mat <- matrix(rep(1:2,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_G <- array(NA, dim = c(num_runs_each, 2))
+for (n in 1:num_runs_each){
+  anova_G[n,1] <- mean(Growth[1,1,1,1,n,], na.rm = TRUE)
+  anova_G[n,2] <- mean(Growth[1,1,15,1,n,], na.rm = TRUE)
+}
+plot(two_steps_mat, anova_G, main = "mean(Growth) for low, high sd(s_ad)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:2, labels=c("[1,1,1,1,,]", "[1,1,15,1,,]"))
+
+```
+
+##### No significant difference between mean(mean(Growth)) for low & high sd(s_ad)
+```{r anova_low_high_s_ad_growth, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df) <- c("sd_param_id", "G")
+for (n in 1:num_runs_each){
+  anova_df[nrow(anova_df) + 1, ] <- c(1, anova_G[n,1])
+  anova_df[nrow(anova_df) + 1, ] <- c(2, anova_G[n,2])
+}
+
+anova_oneway <- aov(G ~ sd_param_id, data = anova_df)
+summary(anova_oneway)
+```
+
+
+
+```{r ANOVA_s_ad_sd_gg_growth, echo = FALSE, fig.align = "center"}
+ggplot(anova_df, aes(sd_param_id, G, group = sd_param_id)) + 
+  geom_boxplot(width = 0.4, fill = "#7B8CDE", notch = FALSE) + xlab("sd(s_ad)") + ylab("Mean(Growth)") + scale_x_continuous(breaks=c(1,2), labels = c("0.001", "0.1")) + labs(title = "Mean(Growth), s_ad variation low vs. high")
+
+ggsave(filename="images/anova_growth_sd_norm.pdf", plot = last_plot())
+```
+
+
+
+### ANOVA: Low variance in b [1,1,1,1,,] vs. High variance in b [1,1,1,15,,] (Abundance)
+```{r anova_prep_b_abund, echo = FALSE, fig.align = "center"}
+two_steps_mat <- matrix(rep(1:2,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 2))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- mean(B_total[1,1,1,1,n,])
+  anova_B[n,2] <- mean(B_total[1,1,1,15,n,])
+}
+plot(two_steps_mat, anova_B, main = "mean(Abundance) for low, high sd(b)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:2, labels=c("[1,1,1,1,,]", "[1,1,1,15,,]"))
+```
+
+##### Small significant difference between mean(mean(Abundance)) for low & high sd(b)
+```{r anova_low_high_b_abund, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df[nrow(anova_df) + 1, ] <- c(1, anova_B[n,1])
+  anova_df[nrow(anova_df) + 1, ] <- c(2, anova_B[n,2])
+}
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df)
+summary(anova_oneway)
+```
+
+```{r ANOVA_b_sd_gg, echo = FALSE, fig.align = "center"}
+ggplot(anova_df, aes(sd_param_id, sd_B, group = sd_param_id)) + 
+  geom_boxplot(width = 0.4, fill = "#7B8CDE", notch = FALSE) + xlab("sd(b)") + ylab("Mean(Abundance)") + scale_x_continuous(breaks=c(1,2), labels = c("0.001", "0.1")) + labs(title = "Mean(Abundance), b variation low vs. high")
+
+ggsave(filename="images/anova_abundance_b_norm.pdf", plot = last_plot())
+```
+
+### ANOVA: Low variance in b [1,1,1,1,,] vs. High variance in b [1,1,1,15,,] (Growth)
+```{r anova_prep_b_growth, echo = FALSE, fig.align = "center"}
+two_steps_mat <- matrix(rep(1:2,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_G <- array(NA, dim = c(num_runs_each, 2))
+for (n in 1:num_runs_each){
+  anova_G[n,1] <- mean(Growth[1,1,1,1,n,], na.rm = TRUE)
+  anova_G[n,2] <- mean(Growth[1,1,1,15,n,], na.rm = TRUE)
+}
+plot(two_steps_mat, anova_G, main = "mean(Growth) for low, high sd(b)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:2, labels=c("[1,1,1,1,,]", "[1,1,1,15,,]"))
+```
+
+##### No significant difference between mean(mean(Growth)) for low & high sd(b)
+```{r anova_low_high_b_growth, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df) <- c("sd_param_id", "G")
+for (n in 1:num_runs_each){
+  anova_df[nrow(anova_df) + 1, ] <- c(1, anova_G[n,1])
+  anova_df[nrow(anova_df) + 1, ] <- c(2, anova_G[n,2])
+}
+
+anova_oneway <- aov(G ~ sd_param_id, data = anova_df)
+summary(anova_oneway)
+```
+
+
+
+
+## Growth vs. Variation in Demographic Parameters
+
+```{r df_growth_sd, echo = FALSE}
+
+G_vs_sd_r <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    G_vs_sd_r[i,j,] <- Growth[i,1,1,1,j,]
+  }
+}
+
+G_vs_sd_s_juv <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    G_vs_sd_s_juv[i,j,] <- Growth[1,i,1,1,j,]
+  }
+}
+
+
+G_vs_sd_s_ad <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    G_vs_sd_s_ad[i,j,] <- Growth[1,1,i,1,j,]
+  }
+}
+
+
+G_vs_sd_b <- array(NA, dim = c(num_steps, num_runs_each, num_years_sim))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    G_vs_sd_b[i,j,] <- Growth[1,1,1,i,j,]
+  }
+}
+
+
+all_sigs_big <- rep(sigma_steps, num_runs_each*num_years_sim)
+df <- data.frame(sigmas = all_sigs_big, G_vs_sd_r = melt(G_vs_sd_r)$value, G_vs_sd_s_juv = melt(G_vs_sd_s_juv)$value, G_vs_sd_s_ad = melt(G_vs_sd_s_ad)$value, G_vs_sd_b = melt(G_vs_sd_b)$value)
+
+model_r <- lm(G_vs_sd_r~sigmas, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(G_vs_sd_s_juv~sigmas, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(G_vs_sd_s_ad~sigmas, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(G_vs_sd_b~sigmas, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+```
+
+
+```{r gg_growth_sd, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=sigmas, y=G_vs_sd_r)) +
+  geom_point(color = "#638475") +
+  ylim(-.6,0.6) + ylab("Growth") + xlab("sd(r)")
+
+p2 <- ggplot(df, aes(x=sigmas, y=G_vs_sd_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylim(-.6,0.6) + ylab("") + xlab("sd(s_juv)")
+
+p3 <- ggplot(df, aes(x=sigmas, y=G_vs_sd_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylim(-.6,0.6) + ylab("Growth") + xlab("sd(s_ad)")
+
+p4 <- ggplot(df, aes(x=sigmas, y=G_vs_sd_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylim(-.6,0.6) + ylab("") + xlab("sd(b)")
+  
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Growth vs. sd(Demographic Parameters) w/ Gaussian Variation", gp = gpar(fontsize = 15)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_growth_sd_norm.pdf", plot = arrange)
+```
+
+
+## Variation in Abundance vs. Variation in Demographic Parameters
+
+```{r sigma_steps, echo = FALSE}
+num_steps <- 15 # number of steps / values of sigma for each demographic parameter
+
+# BOUND ON SIGMA
+sigma_steps <- seq(0.001, 0.1, length.out = num_steps+2)[2:(num_steps+1)]
+
+num_runs_each <- 10
+```
+
+
+### For individual parameters (i.e. [i,1,1,1,n,])
+#### All runs
+
+```{r sd_vs_sd, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+sigma_steps_mat <- matrix(rep(sigma_steps,num_runs_each), nrow=num_steps, byrow = F)
+
+sd_B_vs_r <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_B_vs_r[i,j] <- sd(B_total[i,1,1,1,j,])
+  }
+}
+plot(sigma_steps_mat, sd_B_vs_r, main = "sd(Abundance) vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd of r", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+sd_B_vs_s_juv <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_B_vs_s_juv[i,j] <- sd(B_total[1,i,1,1,j,])
+  }
+}
+plot(sigma_steps_mat, sd_B_vs_s_juv, main = "sd(Abundance) vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd of s_juv", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+sd_B_vs_s_ad <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_B_vs_s_ad[i,j] <- sd(B_total[1,1,i,1,j,])
+  }
+}
+plot(sigma_steps_mat, sd_B_vs_s_ad, main = "sd(Abundance) vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd of s_ad", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+sd_B_vs_b <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_B_vs_b[i,j] <- sd(B_total[1,1,1,i,j,])
+  }
+}
+plot(sigma_steps_mat, sd_B_vs_b, main = "sd(Abundance) vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd of b", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+```{r gg_sd_sd_1, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+all_sigs <- rep(sigma_steps, num_runs_each)
+df <- data.frame(sigmas = all_sigs, sd_B_vs_r = melt(sd_B_vs_r)$value, sd_B_vs_s_juv = melt(sd_B_vs_s_juv)$value, sd_B_vs_s_ad = melt(sd_B_vs_s_ad)$value, sd_B_vs_b = melt(sd_B_vs_b)$value)
+
+model_r <- lm(sd_B_vs_r~sigmas, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(sd_B_vs_s_juv~sigmas, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(sd_B_vs_s_ad~sigmas, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(sd_B_vs_b~sigmas, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+
+p1 <- ggplot(df, aes(x=sigmas, y=sd_B_vs_r)) +
+  geom_point(color = "#638475") +
+  ylab("sd(Abundance)") + xlab("sd(r)") + ylim(0,6e5)
+
+p2 <- ggplot(df, aes(x=sigmas, y=sd_B_vs_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylab("") +xlab("sd(s_juv)") + ylim(0,6e5)
+
+p3 <- ggplot(df, aes(x=sigmas, y=sd_B_vs_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylab("sd(Abundance)") + xlab("sd(s_ad)") + ylim(0,6e5)
+
+p4 <- ggplot(df, aes(x=sigmas, y=sd_B_vs_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylab("") +xlab("sd(b)") + ylim(0,6e5)
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("sd(Abundance) vs. sd(Demographic Parameters) w/ Gaussian Variation", gp = gpar(fontsize = 14)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_sdabundance_sd_norm.pdf", plot = arrange)
+
+```
+
+
+
+
+```{r sd_vs_sd_growth, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+sigma_steps_mat <- matrix(rep(sigma_steps,num_runs_each), nrow=num_steps, byrow = F)
+
+sd_G_vs_r <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_G_vs_r[i,j] <- sd(Growth[i,1,1,1,j,], na.rm = TRUE)
+  }
+}
+
+sd_G_vs_s_juv <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_G_vs_s_juv[i,j] <- sd(Growth[1,i,1,1,j,], na.rm = TRUE)
+  }
+}
+
+sd_G_vs_s_ad <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_G_vs_s_ad[i,j] <- sd(Growth[1,1,i,1,j,], na.rm = TRUE)
+  }
+}
+
+sd_G_vs_b <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_G_vs_b[i,j] <- sd(Growth[1,1,1,i,j,], na.rm = TRUE)
+  }
+}
+
+```
+
+```{r gg_sd_sd_1_growth, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+all_sigs <- rep(sigma_steps, num_runs_each)
+df <- data.frame(sigmas = all_sigs, sd_G_vs_r = melt(sd_G_vs_r)$value, sd_G_vs_s_juv = melt(sd_G_vs_s_juv)$value, sd_G_vs_s_ad = melt(sd_G_vs_s_ad)$value, sd_G_vs_b = melt(sd_G_vs_b)$value)
+
+model_r <- lm(sd_G_vs_r~sigmas, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(sd_G_vs_s_juv~sigmas, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(sd_G_vs_s_ad~sigmas, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(sd_G_vs_b~sigmas, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+
+p1 <- ggplot(df, aes(x=sigmas, y=sd_G_vs_r)) +
+  geom_point(color = "#638475") +
+  ylab("sd(Growth)") + xlab("sd(r)") + ylim(0, 0.2) +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=sigmas, y=sd_G_vs_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylab("") +xlab("sd(s_juv)") + ylim(0, 0.2) +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=sigmas, y=sd_G_vs_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylab("sd(Growth)") + xlab("sd(s_ad)") + ylim(0, 0.2) +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=sigmas, y=sd_G_vs_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylab("") +xlab("sd(b)") + ylim(0, 0.2) +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b,"***"), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("sd(Growth) vs. sd(Demographic Parameters) w/ Gaussian Variation", gp = gpar(fontsize = 14)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_sdgrowth_sd_norm.pdf", plot = arrange)
+```
+
+#### Average over runs
+
+```{r avg_sd_vs_sd, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+
+avg_sd_B_vs_r <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_B_vs_r[i] <- mean(sd_B_vs_r[i,])
+}
+plot(sigma_steps, avg_sd_B_vs_r, main = "Average sd(Abundance) vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd of r", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_sd_B_vs_s_juv <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_B_vs_s_juv[i] <- mean(sd_B_vs_s_juv[i,])
+}
+plot(sigma_steps, avg_sd_B_vs_s_juv, main = "Average sd(Abundance) vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd of s_juv", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_sd_B_vs_s_ad <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_B_vs_s_ad[i] <- mean(sd_B_vs_s_ad[i,])
+}
+plot(sigma_steps, avg_sd_B_vs_s_ad, main = "Average sd(Abundance) vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd of s_ad", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_sd_B_vs_b <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_B_vs_b[i] <- mean(sd_B_vs_b[i,])
+}
+plot(sigma_steps, avg_sd_B_vs_b, main = "Average sd(Abundance) vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd of b", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+```{r r_avg_sd_vs_sd, echo = FALSE}
+df <- data.frame(sigma_steps, avg_sd_B_vs_r, avg_sd_B_vs_s_juv, avg_sd_B_vs_s_ad, avg_sd_B_vs_b)
+
+model_r <- lm(avg_sd_B_vs_r~sigma_steps, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+summary(model_r)
+
+model_s_juv <- lm(avg_sd_B_vs_s_juv~sigma_steps, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+summary(model_s_juv)
+
+model_s_ad <- lm(avg_sd_B_vs_s_ad~sigma_steps, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+summary(model_s_ad)
+
+model_b <- lm(avg_sd_B_vs_b~sigma_steps, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+summary(model_b)
+
+x <- matrix(c("", "Average sd(Abundance) vs sd(r)", "Average sd(Abundance) vs sd(s_juv)", "Average sd(Abundance) vs sd(s_ad)", "Average sd(Abundance) vs sd(b)", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+```{r gg_sd_sd_avg, echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center"}
+p1 <- ggplot(df, aes(x=sigma_steps, y=avg_sd_B_vs_r)) +
+  geom_point(color = "#638475") +
+  geom_smooth(method=lm , color="#04304E", fill = "#7FC8F8", se=TRUE) +
+  ylab("avg(sd(Abundance))") + xlab("sd(r)") + 
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_r), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(df, aes(x=sigma_steps, y=avg_sd_B_vs_s_juv)) +
+  geom_point(color = "#FF5666") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylab("avg(sd(Abundance))") + xlab("sd(s_juv)") + 
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_juv), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(df, aes(x=sigma_steps, y=avg_sd_B_vs_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylab("avg(sd(Abundance))") + xlab("sd(s_ad)") + 
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_s_ad), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(df, aes(x=sigma_steps, y=avg_sd_B_vs_b)) +
+  geom_point(color = "#3E2F5B") +
+  geom_smooth(method=lm , color="#04304E", fill="#7FC8F8", se=TRUE) +
+  ylab("avg(sd(Abundance))") + xlab("sd(b)") + 
+  annotation_custom(grobTree(textGrob(paste("R-Sq =",R_b), x=0.01,  y=0.95, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("avg(sd(Abundance)) vs. sd(Demographic Parameters) w/ Gaussian Variation", gp = gpar(fontsize = 14)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_sdabundance_sd_avg_norm.pdf", plot = arrange)
+```
+
+### Low variance in all parameters [1,1,1,1,,] vs. High variance in all parameters [15,15,15,15,,]
+```{r anova_prep, echo = FALSE, fig.align = "center"}
+three_steps_mat <- matrix(rep(1:3,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 3))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- sd(B_total[1,1,1,1,n,])
+  anova_B[n,2] <- sd(B_total[7,7,7,7,n,])
+  anova_B[n,3] <- sd(B_total[15,15,15,15,n,])
+}
+plot(three_steps_mat, anova_B, main = "sd(Abundance) for low, mid, high sd(all params)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:3, labels=c("[1,1,1,1,,]", "[7,7,7,7,,]", "[15,15,15,15,,]"))
+
+anova_df_low_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(3, anova_B[n,3])
+}
+anova_df_low_mid <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_mid) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(2, anova_B[n,2])
+}
+anova_df_mid_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_mid_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(2, anova_B[n,2])
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(3, anova_B[n,3])
+}
+```
+
+#### One-Way ANOVAs
+
+##### No significant difference between mean(sd(Abundance)) for low & high sd(params)
+```{r anova_low_high, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_high)
+summary(anova_oneway)
+```
+
+##### No significant difference between mean(sd(Abundance)) for low & mid sd(params)
+```{r anova_low_mid, echo = FALSE}
+#summary(anova_df_low_mid)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_mid)
+summary(anova_oneway)
+```
+
+
+##### No significant difference between mean(sd(Abundance)) for mid & high sd(params)
+```{r anova_mid_high, echo = FALSE}
+#summary(anova_df_mid_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_mid_high)
+summary(anova_oneway)
+```
+
+
+
+
+### Low variance in s_ad [1,1,1,1,,] vs. High variance in s_ad [1,1,15,1,,]
+```{r anova_prep_sd_s_ad, echo = FALSE, fig.align = "center"}
+three_steps_mat <- matrix(rep(1:3,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 3))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- sd(B_total[1,1,1,1,n,])
+  anova_B[n,2] <- sd(B_total[1,1,7,1,n,])
+  anova_B[n,3] <- sd(B_total[1,1,15,1,n,])
+}
+plot(three_steps_mat, anova_B, main = "sd(Abundance) for low, mid, high sd(s_ad)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:3, labels=c("[1,1,1,1,,]", "[1,1,7,1,,]", "[1,1,15,1,,]"))
+
+anova_df_low_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(3, anova_B[n,3])
+}
+anova_df_low_mid <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_mid) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(2, anova_B[n,2])
+}
+anova_df_mid_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_mid_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(2, anova_B[n,2])
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(3, anova_B[n,3])
+}
+```
+
+#### One-Way ANOVAs
+
+##### No significant difference between mean(sd(Abundance)) for low & high sd(s_ad)
+```{r anova_low_high_sd_s_ad, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_high)
+summary(anova_oneway)
+```
+
+##### No significant difference between mean(sd(Abundance)) for low & mid sd(s_ad)
+```{r anova_low_mid_sd_s_ad, echo = FALSE}
+#summary(anova_df_low_mid)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_mid)
+summary(anova_oneway)
+```
+
+
+##### No significant difference between mean(sd(Abundance)) for mid & high sd(s_ad)
+```{r anova_mid_high_sd_s_ad, echo = FALSE}
+#summary(anova_df_mid_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_mid_high)
+summary(anova_oneway)
+```
+
+
+
+### Low variance in b [1,1,1,1,,] vs. High variance in b [1,1,1,15,,]
+```{r anova_prep_sd_b, echo = FALSE, fig.align = "center"}
+three_steps_mat <- matrix(rep(1:3,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 3))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- sd(B_total[1,1,1,1,n,])
+  anova_B[n,2] <- sd(B_total[1,1,1,7,n,])
+  anova_B[n,3] <- sd(B_total[1,1,1,15,n,])
+}
+plot(three_steps_mat, anova_B, main = "sd(Abundance) for low, mid, high sd(b)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:3, labels=c("[1,1,1,1,,]", "[1,1,1,7,,]", "[1,1,1,15,,]"))
+
+anova_df_low_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(3, anova_B[n,3])
+}
+anova_df_low_mid <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_mid) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(2, anova_B[n,2])
+}
+anova_df_mid_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_mid_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(2, anova_B[n,2])
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(3, anova_B[n,3])
+}
+```
+
+#### One-Way ANOVAs
+
+##### No significant difference between mean(sd(Abundance)) for low & high sd(b)
+```{r anova_low_high_sd_b, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_high)
+summary(anova_oneway)
+```
+
+##### No significant difference between mean(sd(Abundance)) for low & mid sd(b)
+```{r anova_low_mid_sd_b, echo = FALSE}
+#summary(anova_df_low_mid)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_mid)
+summary(anova_oneway)
+```
+
+
+##### No significant difference between mean(sd(Abundance)) for mid & high sd(b)
+```{r anova_mid_high_sd_b, echo = FALSE}
+#summary(anova_df_mid_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_mid_high)
+summary(anova_oneway)
+```
+
+
+
+
+### Low variance in b [7,7,7,1,,] vs. High variance in b [7,7,7,15,,]
+```{r anova_prep_sd_b_mid, echo = FALSE, fig.align = "center"}
+three_steps_mat <- matrix(rep(1:3,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 3))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- sd(B_total[7,7,7,1,n,])
+  anova_B[n,2] <- sd(B_total[7,7,7,7,n,])
+  anova_B[n,3] <- sd(B_total[7,7,7,15,n,])
+}
+plot(three_steps_mat, anova_B, main = "sd(Abundance) for low, mid, high sd(b)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:3, labels=c("[7,7,7,1,,]", "[7,7,7,7,,]", "[7,7,7,15,,]"))
+
+anova_df_low_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(3, anova_B[n,3])
+}
+anova_df_low_mid <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_mid) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(2, anova_B[n,2])
+}
+anova_df_mid_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_mid_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(2, anova_B[n,2])
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(3, anova_B[n,3])
+}
+```
+
+#### One-Way ANOVAs
+
+##### No significant difference between mean(sd(Abundance)) for low & high sd(b)
+```{r anova_low_high_sd_b_mid, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_high)
+summary(anova_oneway)
+```
+
+##### No significant difference between mean(sd(Abundance)) for low & mid sd(b)
+```{r anova_low_mid_sd_b_mid, echo = FALSE}
+#summary(anova_df_low_mid)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_mid)
+summary(anova_oneway)
+```
+
+
+##### No significant difference between mean(sd(Abundance)) for mid & high sd(b)
+```{r anova_mid_high_sd_b_mid, echo = FALSE}
+#summary(anova_df_mid_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_mid_high)
+summary(anova_oneway)
+```
+
+
+
+### Low variance in b [15,15,15,1,,] vs. High variance in b [15,15,15,15,,]
+```{r anova_prep_sd_b_high, echo = FALSE, fig.align = "center"}
+three_steps_mat <- matrix(rep(1:3,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 3))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- sd(B_total[15,15,15,1,n,])
+  anova_B[n,2] <- sd(B_total[15,15,15,7,n,])
+  anova_B[n,3] <- sd(B_total[15,15,15,15,n,])
+}
+plot(three_steps_mat, anova_B, main = "sd(Abundance) for low, mid, high sd(b)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:3, labels=c("[15,15,15,1,,]", "[15,15,15,7,,]", "[15,15,15,15,,]"))
+
+anova_df_low_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(3, anova_B[n,3])
+}
+anova_df_low_mid <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_mid) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(1, anova_B[n,1])
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(2, anova_B[n,2])
+}
+anova_df_mid_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_mid_high) <- c("sd_param_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(2, anova_B[n,2])
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(3, anova_B[n,3])
+}
+```
+
+#### One-Way ANOVAs
+
+##### No significant difference between mean(sd(Abundance)) for low & high sd(b)
+```{r anova_low_high_sd_b_high, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_high)
+summary(anova_oneway)
+```
+
+##### No significant difference between mean(sd(Abundance)) for low & mid sd(b)
+```{r anova_low_mid_sd_b_high, echo = FALSE}
+#summary(anova_df_low_mid)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_low_mid)
+summary(anova_oneway)
+```
+
+
+##### No significant difference between mean(sd(Abundance)) for mid & high sd(b)
+```{r anova_mid_high_sd_b_high, echo = FALSE}
+#summary(anova_df_mid_high)
+
+anova_oneway <- aov(sd_B ~ sd_param_id, data = anova_df_mid_high)
+summary(anova_oneway)
+```
+
+
+
+### Low variance in all parameters [1,1,1,1,,] vs. High variance in all parameters [15,15,15,15,,] (Growth)
+```{r anova_prep_G, echo = FALSE, fig.align = "center"}
+three_steps_mat <- matrix(rep(1:3,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_G <- array(NA, dim = c(num_runs_each, 3))
+for (n in 1:num_runs_each){
+  anova_G[n,1] <- sd(Growth[1,1,1,1,n,], na.rm = TRUE)
+  anova_G[n,2] <- sd(Growth[7,7,7,7,n,], na.rm = TRUE)
+  anova_G[n,3] <- sd(Growth[15,15,15,15,n,], na.rm = TRUE)
+}
+plot(three_steps_mat, anova_G, main = "sd(Growth) for low, mid, high sd(all params)", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:3, labels=c("[1,1,1,1,,]", "[7,7,7,7,,]", "[15,15,15,15,,]"))
+
+anova_df_low_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_high) <- c("sd_param_id", "sd_G")
+for (n in 1:num_runs_each){
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(1, anova_G[n,1])
+  anova_df_low_high[nrow(anova_df_low_high) + 1, ] <- c(3, anova_G[n,3])
+}
+anova_df_low_mid <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_low_mid) <- c("sd_param_id", "sd_G")
+for (n in 1:num_runs_each){
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(1, anova_G[n,1])
+  anova_df_low_mid[nrow(anova_df_low_mid) + 1, ] <- c(2, anova_G[n,2])
+}
+anova_df_mid_high <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df_mid_high) <- c("sd_param_id", "sd_G")
+for (n in 1:num_runs_each){
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(2, anova_G[n,2])
+  anova_df_mid_high[nrow(anova_df_mid_high) + 1, ] <- c(3, anova_G[n,3])
+}
+```
+
+#### One-Way ANOVAs
+
+##### Significant difference between mean(sd(Abundance)) for low & high sd(params)
+```{r anova_low_high_G, echo = FALSE}
+#summary(anova_df_low_high)
+
+anova_oneway <- aov(sd_G ~ sd_param_id, data = anova_df_low_high)
+summary(anova_oneway)
+```
+
+##### Significant difference between mean(sd(Abundance)) for low & mid sd(params)
+```{r anova_low_mid_G, echo = FALSE}
+#summary(anova_df_low_mid)
+
+anova_oneway <- aov(sd_G ~ sd_param_id, data = anova_df_low_mid)
+summary(anova_oneway)
+```
+
+
+##### Significant difference between mean(sd(Abundance)) for mid & high sd(params)
+```{r anova_mid_high_G, echo = FALSE}
+#summary(anova_df_mid_high)
+
+anova_oneway <- aov(sd_G ~ sd_param_id, data = anova_df_mid_high)
+summary(anova_oneway)
+```
+
+
+## Heavy-Tailedness of Abundance (Fitting Student's t)
+
+### High variation in only parameter of interest (e.g. [15,1,1,1,,])
+
+```{r try_fit, echo = FALSE}
+st_params <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(st_params) <- c("B_total w/", "nu", "mu", "sigma")
+
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[15,1,1,1,n,])
+  tpars <- round(tfit$par.ests,1)
+  st_params[nrow(st_params) + 1, ] <- c(paste("high variation in r, #",n), tpars[1], tpars[2], tpars[3])
+}
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[1,15,1,1,n,])
+  tpars <- round(tfit$par.ests,1)
+  st_params[nrow(st_params) + 1, ] <- c(paste("high variation in s_juv, #",n), tpars[1], tpars[2], tpars[3])
+}
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[1,1,15,1,n,])
+  tpars <- round(tfit$par.ests,1)
+  st_params[nrow(st_params) + 1, ] <- c(paste("high variation in s_ad, #",n), tpars[1], tpars[2], tpars[3])
+}
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[1,1,1,15,n,])
+  tpars <- round(tfit$par.ests,1)
+  st_params[nrow(st_params) + 1, ] <- c(paste("high variation in b, #",n), tpars[1], tpars[2], tpars[3])
+}
+
+st_params
+```
+
+```{r sum_fit, echo = FALSE}
+st_params <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(st_params) <- c("Average(B_total w/)", "nu", "mu", "sigma")
+
+tpars <- array(NA, dim = c(num_runs_each,3))
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[15,1,1,1,n,])
+  tpars[n,] <- round(tfit$par.ests,1)
+}
+st_params[nrow(st_params) + 1, ] <- c("high variation in r", mean(tpars[,1]), mean(tpars[,2]), mean(tpars[,3]))
+
+tpars <- array(NA, dim = c(num_runs_each,3))
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[1,15,1,1,n,])
+  tpars[n,] <- round(tfit$par.ests,1)
+}
+st_params[nrow(st_params) + 1, ] <- c("high variation in s_juv", mean(tpars[,1]), mean(tpars[,2]), mean(tpars[,3]))
+
+tpars <- array(NA, dim = c(num_runs_each,3))
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[1,1,15,1,n,])
+  tpars[n,] <- round(tfit$par.ests,1)
+}
+st_params[nrow(st_params) + 1, ] <- c("high variation in s_ad", mean(tpars[,1]), mean(tpars[,2]), mean(tpars[,3]))
+
+tpars <- array(NA, dim = c(num_runs_each,3))
+for (n in 1:num_runs_each){
+  tfit <- fit.st(B_total[1,1,1,15,n,])
+  tpars[n,] <- round(tfit$par.ests,1)
+}
+st_params[nrow(st_params) + 1, ] <- c("high variation in b", mean(tpars[,1]), mean(tpars[,2]), mean(tpars[,3]))
+
+st_params
+```
+
+
+```{r hist_fit, echo = FALSE, fig.align = "center", eval = FALSE}
+# par(mfrow=c(2,2))
+# 
+# tpars <- array(NA, dim = c(num_runs_each,3))
+# for (n in 1:num_runs_each){
+#   tfit <- fit.st(B_total[15,1,1,1,n,])
+#   tpars[n,] <- round(tfit$par.ests,1)
+# }
+# hist(tpars[,1], xlab = "", main = "nu values for B[15,1,1,1,n,] (r)")
+# 
+# tpars <- array(NA, dim = c(num_runs_each,3))
+# for (n in 1:num_runs_each){
+#   tfit <- fit.st(B_total[1,15,1,1,n,])
+#   tpars[n,] <- round(tfit$par.ests,1)
+# }
+# hist(tpars[,1], xlab = "", main = "nu values for B[1,15,1,1,n,] (s_juv)")
+# 
+# tpars <- array(NA, dim = c(num_runs_each,3))
+# for (n in 1:num_runs_each){
+#   tfit <- fit.st(B_total[1,1,15,1,n,])
+#   tpars[n,] <- round(tfit$par.ests,1)
+# }
+# hist(tpars[,1], xlab = "", main = "nu values for B[1,1,15,1,n,] (s_ad)")
+# 
+# tpars <- array(NA, dim = c(num_runs_each,3))
+# for (n in 1:num_runs_each){
+#   tfit <- fit.st(B_total[1,1,1,15,n,])
+#   tpars[n,] <- round(tfit$par.ests,1)
+# }
+# hist(tpars[,1], xlab = "", main = "nu values for B[1,1,1,15,n,] (b)")
+```
+
+
+
+
+```{r calc_all_nus, echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
+st_params <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(st_params) <- c("B_total w/", "nu", "mu", "sigma")
+
+st_params_all <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(st_params_all) <- c("B_total w/", "nu", "mu", "sigma")
+
+tpars <- array(NA, dim = c(num_runs_each,3))
+
+B_nus <- array(NA, dim = c(num_steps, num_steps, num_steps, num_steps, num_runs_each))
+B_mus <- array(NA, dim = c(num_steps, num_steps, num_steps, num_steps, num_runs_each))
+B_sigmas <- array(NA, dim = c(num_steps, num_steps, num_steps, num_steps, num_runs_each))
+
+for (h in 1:num_steps){ # r
+  sigma_r <- sigma_steps[h]
+  
+  for (i in 1:num_steps){ # s_juv
+    sigma_s_juv <- sigma_steps[i]
+    
+    for (j in 1:num_steps){ # s_ad
+      sigma_s_ad <- sigma_steps[j]
+      
+      for (k in 1:num_steps){ # b
+        sigma_b <- sigma_steps[k]
+        
+        for (n in 1:num_runs_each){ # n
+          tfit <- try(fit.st(B_total[h,i,j,k,n, ]), silent = TRUE)
+          if (length(tfit) == 1){
+            tpars[n,] <- rep(NA, 3)
+          } else{
+            tpars[n,] <- round(tfit$par.ests,1)
+          }
+          tfit <- NA
+          st_params_all[nrow(st_params) + 1, ] <- c(paste("B_total[",h,",",i,",",j,",",k,",",n,", ]"), tpars[n,1], tpars[n,2], tpars[n,3])
+          B_nus[h,i,j,k,n] <- tpars[n,1]
+          B_mus[h,i,j,k,n] <- tpars[n,2]
+          B_sigmas[h,i,j,k,n] <- tpars[n,3]
+        }
+        st_params[nrow(st_params) + 1, ] <- c(paste("Average over B_total[",h,",",i,",",j,",",k,", n, ]"), mean(tpars[,1], na.rm = TRUE), mean(tpars[,2], na.rm = TRUE), mean(tpars[,3], na.rm = TRUE))
+      }
+    }
+  }
+}
+
+save(B_nus, B_mus, B_sigmas, st_params_all, file = "../Agestructured_simulations_nus.RData")
+```
+
+
+```{r load_nus, echo = FALSE}
+load("../Agestructured_simulations_nus.RData") # load
+```
+
+#### Variation in Heavy-tailedness ($nu$) vs. Variation in Demographic Parameters (other 3 params low variation)
+
+##### All runs
+```{r sd_vs_nu, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+sigma_steps_mat <- matrix(rep(sigma_steps,num_runs_each), nrow=num_steps, byrow = F)
+
+nu_vs_r <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    nu_vs_r[i,j] <- B_nus[i,1,1,1,j]
+  }
+}
+plot(sigma_steps_mat, nu_vs_r, main = "nu(Abundance) vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd of r", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+nu_vs_s_juv <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    nu_vs_s_juv[i,j] <- B_nus[1,i,1,1,j]
+  }
+}
+plot(sigma_steps_mat, nu_vs_s_juv, main = "nu(Abundance) vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd of s_juv", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+nu_vs_s_ad <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    nu_vs_s_ad[i,j] <- B_nus[1,1,i,1,j]
+  }
+}
+plot(sigma_steps_mat, nu_vs_s_ad, main = "nu(Abundance) vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd of s_ad", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+nu_vs_b <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    nu_vs_b[i,j] <- B_nus[1,1,1,i,j]
+  }
+}
+plot(sigma_steps_mat, nu_vs_b, main = "nu(Abundance) vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd of b", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+##### Average over runs
+
+```{r sd_vs_avg_nu, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+
+avg_nu_vs_r <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_nu_vs_r[i] <- mean(B_nus[i,1,1,1,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_nu_vs_r, main = "Average nu(Abundance) vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd of r", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_nu_vs_s_juv <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_nu_vs_s_juv[i] <- mean(B_nus[1,i,1,1,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_nu_vs_s_juv, main = "Average nu(Abundance) vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd of s_juv", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_nu_vs_s_ad <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_nu_vs_s_ad[i] <- mean(B_nus[1,1,i,1,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_nu_vs_s_ad, main = "Average nu(Abundance) vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd of s_ad", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_nu_vs_b <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_nu_vs_b[i] <- mean(B_nus[1,1,1,i,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_nu_vs_b, main = "Average nu(Abundance) vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd of b", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+
+```{r r_sd_vs_avg_nu, echo = FALSE}
+df <- data.frame(sigma_steps, avg_nu_vs_r, avg_nu_vs_s_juv, avg_nu_vs_s_ad, avg_nu_vs_b)
+
+model_r <- lm(avg_nu_vs_r~sigma_steps, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+
+model_s_juv <- lm(avg_nu_vs_s_juv~sigma_steps, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+
+model_s_ad <- lm(avg_nu_vs_s_ad~sigma_steps, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+
+model_b <- lm(avg_nu_vs_b~sigma_steps, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+
+x <- matrix(c("", "Average nu(Abundance) vs sd(r)", "Average nu(Abundance) vs sd(s_juv)", "Average nu(Abundance) vs sd(s_ad)", "Average nu(Abundance) vs sd(b)", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+##### Percentage of Nus < 30 
+
+```{r sd_vs_percent_nu, echo = FALSE, fig.align = "center"}
+
+percents <- array(NA, dim = c(num_steps,num_steps,num_steps,num_steps))
+
+for (h in 1:num_steps){
+  for (i in 1:num_steps){
+    for (j in 1:num_steps){
+      for (k in 1:num_steps){
+        percents[h,i,j,k] <- length(which(B_nus[h,i,j,k,] < 30)) / num_runs_each
+      }
+    }
+  }
+}
+
+
+par(mfrow=c(2,2))
+
+plot(sigma_steps, percents[,1,1,1], main = "% nu(Abundance) < 30 vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd(r)", xaxt = "n", ylim = c(0,1))
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+plot(sigma_steps, percents[1,,1,1], main = "% nu(Abundance) < 30 vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd(s_juv)", xaxt = "n", ylim = c(0,1))
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+plot(sigma_steps, percents[1,1,,1], main = "% nu(Abundance) < 30 vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd(s_ad)", xaxt = "n", ylim = c(0,1))
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+plot(sigma_steps, percents[1,1,1,], main = "% nu(Abundance) < 30 vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd(b)", xaxt = "n", ylim = c(0,1))
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+
+
+```{r sd_vs_percent_nu_gg, echo = FALSE, fig.align = "center"}
+df <- data.frame(sigma_steps = sigma_steps, Nu_r = percents[,1,1,1], Nu_s_juv = percents[1,,1,1], Nu_s_ad = percents[1,1,,1], Nu_b = percents[1,1,1,])
+p1 <- ggplot(df, aes(x=sigma_steps, y=Nu_r)) +
+  geom_point(color = "#638475") +
+  ylab("%(Nu < 30)") + xlab("sd(r)") + ylim(0,1)
+
+p2 <- ggplot(df, aes(x=sigma_steps, y=Nu_s_juv)) +
+  geom_point(color = "#FF5666") +
+  ylab("") +xlab("sd(s_juv)") + ylim(0,1)
+
+p3 <- ggplot(df, aes(x=sigma_steps, y=Nu_s_ad)) +
+  geom_point(color = "#FFB86F") +
+  ylab("%(Nu < 30)") + xlab("sd(s_ad)") + ylim(0,1)
+
+p4 <- ggplot(df, aes(x=sigma_steps, y=Nu_b)) +
+  geom_point(color = "#3E2F5B") +
+  ylab("") +xlab("sd(b)") + ylim(0,1)
+
+# grid.arrange(p1, p2, p3, p4, nrow = 2, top = textGrob("Percentage(nu < 30) vs. sd(Demographic Parameters) w/ Gaussian Variation", gp = gpar(fontsize = 14)))
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+arrange
+
+ggsave(filename="images/scatter_nu_sd_norm.pdf", plot = arrange)
+```
+
+### High variation in all parameters (e.g. [15,15,15,15,,])
+
+
+```{r fit_all15, echo = FALSE}
+st_params <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(st_params) <- c("B_total w/", "nu")
+
+for (n in 1:num_runs_each){
+  st_params[nrow(st_params) + 1, ] <- c(paste("[15,15,15,15,,] #",n), B_nus[15,15,15,15,n])
+}
+
+st_params
+```
+
+
+### All combinations of high (15) & low (1) variation in parameters 
+
+```{r 4_choose_nus, echo = FALSE}
+st_params <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(st_params) <- c("Variation", "% of nus < 30")
+
+vals <- c(1, 15)
+percentage_heavy <- array(NA, dim = c(2,2,2,2))
+
+for (h_ind in 1:2){
+  h <- vals[h_ind]
+  for (i_ind in 1:2){
+    i <- vals[i_ind]
+    for (j_ind in 1:2){
+      j <- vals[j_ind]
+      for (k_ind in 1:2){
+        k <- vals[k_ind]
+        
+        which_list <- c()
+        if (h_ind == 2){
+          which_list <- paste(which_list, "r,", collapse = ",")
+        }
+        if (i_ind == 2){
+          which_list <- paste(which_list, "s_juv,", collapse = ",")
+        }
+        if (j_ind == 2){
+          which_list <- paste(which_list, "s_ad,", collapse = ",")
+        }
+        if (k_ind == 2){
+          which_list <- paste(which_list, "b", collapse = ",")
+        }
+        if (length(which_list)==0){
+          which_list <- paste(which_list, "all low")
+        } else{
+          which_list <- paste(which_list, "high")
+        }
+        
+        percentage_heavy[h_ind, i_ind, j_ind, k_ind] <- length(which(B_nus[h,i,j,k, ] < 30))/num_runs_each
+        st_params[nrow(st_params) + 1, ] <- c(paste(which_list), percentage_heavy[h_ind, i_ind, j_ind, k_ind])
+        
+      }
+    }
+  }
+}
+
+st_params <- st_params[order(st_params$Variation),]
+colnames(st_params)[1] <- "B_total w/"
+#print(st_params, row.names = FALSE)
+st_params
+```
+
+#### Significantly higher percentage of Nu < 30 with high s_ad variation
+
+```{r ANOVA_s_ad_prep, echo = FALSE, fig.align = "center"}
+colnames(st_params)[2] <- "Percentage"
+s_ad_in <- c(0,0,0,0,1,1,0,0,1,1,1,1,0,0,1,1)
+plot(s_ad_in, st_params$Percentage, main = "% of Nus < 30, s_ad low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "Percentage of nus < 30")
+axis(1, at=0:1, labels=c("s_ad low variation", "s_ad high variation")) 
+ 
+mean(as.numeric(st_params$Percentage[!!s_ad_in]))
+mean(as.numeric(st_params$Percentage[!s_ad_in]))
+
+```
+
+```{r ANOVA_s_ad_gg, echo = FALSE, fig.align = "center"}
+s_ad_in <- c(0.001,0.001,0.001,0.001,0.1,0.1,0.001,0.001,0.1,0.1,0.1,0.1,0.001,0.001,0.1,0.1)
+df <- data.frame(s_ad_in = s_ad_in, percent = as.numeric(st_params$Percentage))
+ggplot(df, aes(s_ad_in, percent, group = s_ad_in)) + 
+  geom_boxplot(width = 0.4, fill = "#7B8CDE", notch = FALSE) + xlab("sd(s_ad)") + ylab("Percentage(nu < 30)") + scale_x_continuous(breaks=c(-0.05,0.15), labels = c("0.001", "0.1")) + labs(title = "Percentage(nu < 30), s_ad variation low vs. high")
+
+ggsave(filename="images/anova_nu_sad_norm.pdf")
+```
+
+
+```{r ANOVA_s_ad, echo = FALSE}
+anova_df <- data.frame(Percentage = st_params$Percentage, s_ad_in)
+anova_oneway <- aov(Percentage ~ s_ad_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+##### Heatmaps
+
+```{r heatmap_s_ad_prep, echo = FALSE}
+percentage_heavy <- array(NA, dim = c(num_steps,num_steps,num_steps,num_steps))
+
+for (h in 1:num_steps){
+  for (i in 1:num_steps){
+    for (j in 1:num_steps){
+      for (k in 1:num_steps){
+        percentage_heavy[h, i, j, k] <- length(which(B_nus[h,i,j,k, ] < 30))/num_runs_each
+      }
+    }
+  }
+}
+
+percentage_heavy_df <- melt(percentage_heavy)
+colnames(percentage_heavy_df) <- c("r_ind", "s_juv_ind", "s_ad_ind", "b_ind", "percent_heavy")
+```
+
+
+```{r heatmap_s_ad_avg, echo = FALSE, fig.align = "center"}
+v1 <- ggplot(percentage_heavy_df, aes(r_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled() + theme(legend.position = "bottom")
+v2 <- ggplot(percentage_heavy_df, aes(s_juv_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled() + theme(legend.position = "bottom")
+v3 <- ggplot(percentage_heavy_df, aes(b_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled() + theme(legend.position = "bottom")
+
+plot <- ggarrange(v1, v2, v3, nrow = 1, common.legend = TRUE, legend="bottom")
+annotate_figure(plot, top = text_grob("Heatmaps of Percentage of Heavy-tailed Runs (Average)", color = "black", face = "bold", size = 15))
+```
+
+
+```{r heatmap_s_ad_low, echo = FALSE, fig.align = "center"}
+percentage_heavy_df <- melt(percentage_heavy[ ,1, ,1])
+colnames(percentage_heavy_df) <- c("r_ind", "s_ad_ind", "percent_heavy")
+
+v1 <- ggplot(percentage_heavy_df, aes(r_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled()
+
+percentage_heavy_df <- melt(percentage_heavy[1, , ,1])
+colnames(percentage_heavy_df) <- c("s_juv_ind", "s_ad_ind", "percent_heavy")
+
+v2 <- ggplot(percentage_heavy_df, aes(s_juv_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled()
+
+percentage_heavy_df <- melt(percentage_heavy[1,1, , ])
+colnames(percentage_heavy_df) <- c("b_ind", "s_ad_ind", "percent_heavy")
+
+v3 <- ggplot(percentage_heavy_df, aes(b_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled()
+
+plot <- ggarrange(v1, v2, v3, nrow = 1, common.legend = TRUE, legend="bottom")
+annotate_figure(plot, top = text_grob("Heatmaps of Percentage of Heavy-tailed Runs (Non-Interest Low)", color = "black", face = "bold", size = 15))
+```
+
+
+```{r heatmap_s_ad_high, echo = FALSE, fig.align = "center"}
+percentage_heavy_df <- melt(percentage_heavy[ ,15, ,15])
+colnames(percentage_heavy_df) <- c("r_ind", "s_ad_ind", "percent_heavy")
+
+v1 <- ggplot(percentage_heavy_df, aes(r_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled()
+
+percentage_heavy_df <- melt(percentage_heavy[15, , ,15])
+colnames(percentage_heavy_df) <- c("s_juv_ind", "s_ad_ind", "percent_heavy")
+
+v2 <- ggplot(percentage_heavy_df, aes(s_juv_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled()
+
+percentage_heavy_df <- melt(percentage_heavy[15,15, , ])
+colnames(percentage_heavy_df) <- c("b_ind", "s_ad_ind", "percent_heavy")
+
+v3 <- ggplot(percentage_heavy_df, aes(b_ind, s_ad_ind, z = percent_heavy)) +
+        geom_contour_filled()
+
+plot <- ggarrange(v1, v2, v3, nrow = 1, common.legend = TRUE, legend="bottom")
+annotate_figure(plot, top = text_grob("Heatmaps of Percentage of Heavy-tailed Runs (Non-Interest High)", color = "black", face = "bold", size = 15))
+```
+
+#### No significant difference in Nu based on r variation
+
+```{r ANOVA_r_prep, echo = FALSE, fig.align = "center"}
+r_in <- c(0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0)
+plot(r_in, st_params$Percentage, main = "% of Nus < 30, r low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "Percentage of nus < 30")
+axis(1, at=0:1, labels=c("r low variation", "r high variation"))
+
+```
+
+```{r ANOVA_r, echo = FALSE}
+anova_df <- data.frame(Percentage = st_params$Percentage, r_in)
+anova_oneway <- aov(Percentage ~ r_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+#### No significant difference in Nu based on s_juv variation
+
+```{r ANOVA_s_juv_prep, echo = FALSE, fig.align = "center"}
+s_juv_in <- c(0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1)
+plot(s_juv_in, st_params$Percentage, main = "% of Nus < 30, s_juv low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "Percentage of nus < 30")
+axis(1, at=0:1, labels=c("s_juv_in low variation", "s_juv_in high variation"))
+
+```
+
+```{r ANOVA_s_juv, echo = FALSE}
+anova_df <- data.frame(Percentage = st_params$Percentage, s_juv_in)
+anova_oneway <- aov(Percentage ~ s_juv_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+#### No significant difference in Nu based on b variation
+
+```{r ANOVA_b_prep, echo = FALSE, fig.align = "center"}
+b_in <- c(0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0)
+plot(b_in, st_params$Percentage, main = "% of Nus < 30, b low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "Percentage of nus < 30")
+axis(1, at=0:1, labels=c("b low variation", "b high variation"))
+
+```
+
+```{r ANOVA_b, echo = FALSE}
+anova_df <- data.frame(Percentage = st_params$Percentage, b_in)
+anova_oneway <- aov(Percentage ~ b_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+
+#### Variation in sd(Abundance) vs. Variation in Demographic Parameters (other 3 params low variation)
+
+##### All runs
+```{r sd_vs_sd_fit, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+sigma_steps_mat <- matrix(rep(sigma_steps,num_runs_each), nrow=num_steps, byrow = F)
+
+sd_vs_r <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_vs_r[i,j] <- B_sigmas[i,1,1,1,j]
+  }
+}
+plot(sigma_steps_mat, sd_vs_r, main = "sd(Abundance) vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd of r", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+sd_vs_s_juv <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_vs_s_juv[i,j] <- B_sigmas[1,i,1,1,j]
+  }
+}
+plot(sigma_steps_mat, sd_vs_s_juv, main = "sd(Abundance) vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd of s_juv", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+sd_vs_s_ad <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_vs_s_ad[i,j] <- B_sigmas[1,1,i,1,j]
+  }
+}
+plot(sigma_steps_mat, sd_vs_s_ad, main = "sd(Abundance) vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd of s_ad", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+sd_vs_b <- array(NA, dim = c(num_steps, num_runs_each))
+for (i in 1:num_steps){
+  for (j in 1:num_runs_each){
+    sd_vs_b[i,j] <- B_sigmas[1,1,1,i,j]
+  }
+}
+plot(sigma_steps_mat, sd_vs_b, main = "sd(Abundance) vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd of b", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+##### Average over runs
+
+```{r sd_vs_avg_sd_fit, echo = FALSE, fig.align = "center"}
+par(mfrow=c(2,2))
+
+avg_sd_vs_r <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_vs_r[i] <- mean(B_sigmas[i,1,1,1,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_sd_vs_r, main = "Average sd(Abundance) vs sd(r)", pch = 19, col = alpha("darkseagreen4", 0.40), xlab = "sd of r", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_sd_vs_s_juv <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_vs_s_juv[i] <- mean(B_sigmas[1,i,1,1,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_sd_vs_s_juv, main = "Average sd(Abundance) vs sd(s_juv)", pch = 19, col = alpha("deeppink", 0.40), xlab = "sd of s_juv", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_sd_vs_s_ad <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_vs_s_ad[i] <- mean(B_sigmas[1,1,i,1,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_sd_vs_s_ad, main = "Average sd(Abundance) vs sd(s_ad)", pch = 19, col = alpha("gold3", 0.40), xlab = "sd of s_ad", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+avg_sd_vs_b <- rep(NA, num_steps)
+for (i in 1:num_steps){
+  avg_sd_vs_b[i] <- mean(B_sigmas[1,1,1,i,], rm.na = TRUE)
+}
+plot(sigma_steps, avg_sd_vs_b, main = "Average sd(Abundance) vs sd(b)", pch = 19, col = alpha("blue", 0.40), xlab = "sd of b", xaxt = "n")
+axis(1, at=sigma_steps, labels=round(sigma_steps,3))
+
+```
+
+
+```{r r_sd_vs_avg_sd_fit, echo = FALSE}
+df <- data.frame(sigma_steps, avg_sd_vs_r, avg_sd_vs_s_juv, avg_sd_vs_s_ad, avg_sd_vs_b)
+
+model_r <- lm(avg_sd_vs_r~sigma_steps, data=df)
+R_r <- round(summary(model_r)$r.squared,4)
+
+model_s_juv <- lm(avg_sd_vs_s_juv~sigma_steps, data=df)
+R_s_juv <- round(summary(model_s_juv)$r.squared,4)
+
+model_s_ad <- lm(avg_sd_vs_s_ad~sigma_steps, data=df)
+R_s_ad <- round(summary(model_s_ad)$r.squared,4)
+
+model_b <- lm(avg_sd_vs_b~sigma_steps, data=df)
+R_b <- round(summary(model_b)$r.squared,4)
+
+x <- matrix(c("", "Average sd(Abundance) vs sd(r)", "Average sd(Abundance) vs sd(s_juv)", "Average sd(Abundance) vs sd(s_ad)", "Average sd(Abundance) vs sd(b)", "R-squared", R_r, R_s_juv, R_s_ad, R_b), nrow = 5, byrow = FALSE)
+x
+```
+
+
+### High variation in all parameters (e.g. [15,15,15,15,,])
+
+
+```{r fit_all15_sd, echo = FALSE}
+st_params <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(st_params) <- c("B_total w/", "sigma")
+
+for (n in 1:num_runs_each){
+  st_params[nrow(st_params) + 1, ] <- c(paste("[15,15,15,15,,] #",n), B_sigmas[15,15,15,15,n])
+}
+
+st_params
+```
+
+
+### All combinations of high (15) & low (1) variation in parameters 
+
+```{r 4_choose_sigmas_fit, echo = FALSE}
+st_params <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(st_params) <- c("Variation", "sigma")
+
+vals <- c(1, 15)
+percentage_heavy <- array(NA, dim = c(2,2,2,2))
+
+for (h_ind in 1:2){
+  h <- vals[h_ind]
+  for (i_ind in 1:2){
+    i <- vals[i_ind]
+    for (j_ind in 1:2){
+      j <- vals[j_ind]
+      for (k_ind in 1:2){
+        k <- vals[k_ind]
+        
+        which_list <- c()
+        if (h_ind == 2){
+          which_list <- paste(which_list, "r,", collapse = ",")
+        }
+        if (i_ind == 2){
+          which_list <- paste(which_list, "s_juv,", collapse = ",")
+        }
+        if (j_ind == 2){
+          which_list <- paste(which_list, "s_ad,", collapse = ",")
+        }
+        if (k_ind == 2){
+          which_list <- paste(which_list, "b", collapse = ",")
+        }
+        if (length(which_list)==0){
+          which_list <- paste(which_list, "all low")
+        } else{
+          which_list <- paste(which_list, "high")
+        }
+        
+        st_params[nrow(st_params) + 1, ] <- c(paste(which_list), mean(B_sigmas[h_ind, i_ind, j_ind, k_ind,]))
+        
+      }
+    }
+  }
+}
+
+st_params <- st_params[order(st_params$Variation),]
+colnames(st_params)[1] <- "B_total w/"
+#print(st_params, row.names = FALSE)
+st_params
+```
+
+#### No significant difference in sigma based on s_ad variation
+
+```{r ANOVA_s_ad_prep_sd_fit, echo = FALSE, fig.align = "center"}
+colnames(st_params)[2] <- "sigma"
+s_ad_in <- c(0,0,0,0,1,1,0,0,1,1,1,1,0,0,1,1)
+plot(s_ad_in, st_params$sigma, main = "sigmas", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "Sigma")
+axis(1, at=0:1, labels=c("s_ad low variation", "s_ad high variation"))
+
+
+```
+
+
+```{r ANOVA_s_ad_sd_fit, echo = FALSE}
+anova_df <- data.frame(sigma = st_params$sigma, s_ad_in)
+anova_oneway <- aov(sigma ~ s_ad_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+#### Small difference in sigma based on r variation
+
+```{r ANOVA_r_prep_sd_fit, echo = FALSE, fig.align = "center"}
+r_in <- c(0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0)
+plot(r_in, st_params$sigma, main = "sigma, r low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "sd(abundance)")
+axis(1, at=0:1, labels=c("r low variation", "r high variation"))
+
+```
+
+```{r ANOVA_r_sd_fit, echo = FALSE}
+anova_df <- data.frame(sigma = st_params$sigma, r_in)
+anova_oneway <- aov(sigma ~ r_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+#### No significant difference in sigma based on s_juv variation
+
+```{r ANOVA_s_juv_prep_sd_fit, echo = FALSE, fig.align = "center"}
+s_juv_in <- c(0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1)
+plot(s_juv_in, st_params$sigma, main = "sigma, s_juv low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "sigma")
+axis(1, at=0:1, labels=c("s_juv_in low variation", "s_juv_in high variation"))
+
+```
+
+```{r ANOVA_s_juv_sd_fit, echo = FALSE}
+anova_df <- data.frame(sigma = st_params$sigma, s_juv_in)
+anova_oneway <- aov(sigma ~ s_juv_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+#### No significant difference in sigma based on b variation
+
+```{r ANOVA_b_prep_sd_fit, echo = FALSE, fig.align = "center"}
+b_in <- c(0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0)
+plot(b_in, st_params$sigma, main = "sigma, b low vs. high", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ", ylab = "sigma")
+axis(1, at=0:1, labels=c("b low variation", "b high variation"))
+
+```
+
+```{r ANOVA_b_sd_fit, echo = FALSE}
+anova_df <- data.frame(sigma = st_params$sigma, b_in)
+anova_oneway <- aov(sigma ~ b_in, data = anova_df)
+summary(anova_oneway)
+```
+
+
+

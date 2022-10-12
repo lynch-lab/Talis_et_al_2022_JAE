@@ -1,0 +1,1 @@
+Supplementary material for the paper "Variability, Skipped Breeding, and Heavy-tailed Dynamics in an Antarctic Seabird", published in the Journal of Animal Ecology in 2022.

@@ -1,0 +1,588 @@
+---
+title: "Age-Structured Simulation Plots - Comparing Gaussian and Heavy-tailed Inputs"
+output:
+  html_document:
+    toc: true
+    toc_depth: 4
+---
+
+```{r packages, echo = FALSE, message = FALSE, warning = FALSE}
+library(printr)
+library(dplyr)
+library(ggplot2)
+library(QRM)
+library(tidyverse)
+library("metRology")
+library(fitdistrplus)
+library(LaplacesDemon)
+library(scales)
+library(grid)
+library(gridExtra)
+library(reshape2)
+library(metR)
+library(ggpubr)
+library(patchwork)
+library(latex2exp)
+```
+
+
+```{r load, echo = FALSE}
+load("../Agestructured_simulations_data.RData")
+B_total_norm <- B_total
+
+load("../Agestructured_simulations_studenttdemography_data.RData")
+B_total_t <- B_total
+
+load("../Agestructured_simulations_nus.RData") 
+B_nus_norm <- B_nus
+
+load("../Agestructured_simulations_studenttdemography_nus.RData")
+B_nus_t <- B_nus
+
+```
+
+```{r sigma_steps, echo = FALSE}
+num_steps <- 15 # number of steps / values of sigma for each demographic parameter
+
+# BOUND ON SIGMA
+sigma_steps <- seq(0.001, 0.1, length.out = num_steps+2)[2:(num_steps+1)]
+
+num_runs_each <- 10
+```
+
+
+## Gaussian-Truncated Inputs
+```{r, echo = FALSE}
+load("../ABC_parameter_med.RData")
+r_mean <- r_med
+s_juv_mean <- s_juv_med
+s_ad_mean <- s_ad_med
+b_mean <- b_med
+```
+
+```{r def_funcs, echo = FALSE}
+rtruncnorm <- function(n, mean, sd) {
+  min <- 0
+  max <- 1
+  bounds <- pnorm(c(min, max), mean, sd)
+  u <- runif(n, bounds[1], bounds[2])
+  qnorm(u, mean, sd)
+}
+
+rtrunct <- function(n, mean, sd, nu = 3) {
+  rtrunc(n, spec = "st", a = 0, b = 1, mu = mean, sigma = sd, nu = nu)
+}
+```
+
+```{r hists_setup, echo = FALSE}
+n <- 1e5
+
+r_001 <- rtruncnorm(n, r_mean, 0.025)
+s_juv_001 <- rtruncnorm(n, s_juv_mean, 0.025)
+s_ad_001 <- rtruncnorm(n, s_ad_mean, 0.025)
+b_001 <- rtruncnorm(n, b_mean, 0.025)
+
+r_01 <- rtruncnorm(n, r_mean, 0.05)
+s_juv_01 <- rtruncnorm(n, s_juv_mean, 0.05)
+s_ad_01 <- rtruncnorm(n, s_ad_mean, 0.05)
+b_01 <- rtruncnorm(n, b_mean, 0.05)
+
+r_1 <- rtruncnorm(n, r_mean, 0.1)
+s_juv_1 <- rtruncnorm(n, s_juv_mean, 0.1)
+s_ad_1 <- rtruncnorm(n, s_ad_mean, 0.1)
+b_1 <- rtruncnorm(n, b_mean, 0.1)
+```
+
+```{r hists_norm, echo = FALSE, fig.align = "center"}
+par(mfrow=c(3,4))
+par(mar=c(2.5,2,2,2))
+
+hist(r_001, seq(0,1, length.out=150), xlim = c(0,1), main = "r, sd = 0.001", ylab = "", freq = FALSE)
+hist(s_juv_001, seq(0,1, length.out=150), xlim = c(0,1), main = "s_juv, sd = 0.001", ylab = "", xlab = "", freq = FALSE)
+hist(s_ad_001, seq(0,1, length.out=150), xlim = c(0,1), main = "s_ad, sd = 0.001", ylab = "", xlab = "", freq = FALSE)
+hist(b_001, seq(0,1, length.out=150), xlim = c(0,1), main = "b, sd = 0.001", ylab = "", xlab = "", freq = FALSE)
+
+hist(r_01, seq(0,1, length.out=150), xlim = c(0,1), main = "r, sd = 0.01", ylab = "", freq = FALSE)
+hist(s_juv_01, seq(0,1, length.out=150), xlim = c(0,1), main = "s_juv, sd = 0.01", ylab = "", xlab = "", freq = FALSE)
+hist(s_ad_01, seq(0,1, length.out=150), xlim = c(0,1), main = "s_ad, sd = 0.01", ylab = "", xlab = "", freq = FALSE)
+hist(b_01, seq(0,1, length.out=150), xlim = c(0,1), main = "b, sd = 0.01", ylab = "", xlab = "", freq = FALSE)
+
+hist(r_1, seq(0,1, length.out=150), xlim = c(0,1), main = "r, sd = 0.1", ylab = "", freq = FALSE)
+hist(s_juv_1, seq(0,1, length.out=150), xlim = c(0,1), main = "s_juv, sd = 0.1", ylab = "", xlab = "", freq = FALSE)
+hist(s_ad_1, seq(0,1, length.out=150), xlim = c(0,1), main = "s_ad, sd = 0.1", ylab = "", xlab = "", freq = FALSE)
+hist(b_1, seq(0,1, length.out=150), xlim = c(0,1), main = "b, sd = 0.1", ylab = "", xlab = "", freq = FALSE)
+```
+
+
+
+```{r hists_norm_gg, echo = FALSE, fig.align = "center"}
+r_df <- data.frame(
+  sigma = factor(rep(c("0.025", "0.05", "0.1"), each=n)),
+  r = c(r_001, r_01, r_1)
+)
+
+s_juv_df <- data.frame(
+  sigma = factor(rep(c("0.025", "0.05", "0.1"), each=n)),
+  s_juv = c(s_juv_001, s_juv_01, s_juv_1)
+)
+
+s_ad_df <- data.frame(
+  sigma = factor(rep(c("0.025", "0.05", "0.1"), each=n)),
+  s_ad = c(s_ad_001, s_ad_01, s_ad_1)
+)
+
+b_df <- data.frame(
+  sigma = factor(rep(c("0.025", "0.05", "0.1"), each=n)),
+  b = c(b_001, b_01, b_1)
+)
+
+
+p1 <- ggplot(r_df, aes(r, fill = sigma, colour = sigma)) +
+  geom_vline(aes(xintercept = r_mean), color = "#638475") +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.1) +
+  scale_fill_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  scale_colour_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  xlim(0,1) + ylab("density") +
+  annotation_custom(grobTree(textGrob(paste("Mean =",round(r_mean,3)), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p2 <- ggplot(s_juv_df, aes(s_juv, fill = sigma, colour = sigma)) +
+  geom_vline(aes(xintercept = s_juv_mean), color = "#FF5666") +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.1) +
+  scale_fill_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  scale_colour_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  xlim(0,1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("Mean =",round(s_juv_mean,3)), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p3 <- ggplot(s_ad_df, aes(s_ad, fill = sigma, colour = sigma)) +
+  geom_vline(aes(xintercept = s_ad_mean), color = "#FFB86F") +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.1) +
+  scale_fill_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  scale_colour_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  xlim(0,1) + ylab("density") +
+  annotation_custom(grobTree(textGrob(paste("Mean =",round(s_ad_mean,3)), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+p4 <- ggplot(b_df, aes(b, fill = sigma, colour = sigma)) +
+  geom_vline(aes(xintercept = b_mean), color = "#3E2F5B") +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.1) +
+  scale_fill_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  scale_colour_manual(values = c("#D88C9A", "#8E7DBE", "#1A535C")) +
+  xlim(0,1) + ylab("") +
+  annotation_custom(grobTree(textGrob(paste("Mean =",round(b_mean,3)), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10))))
+
+
+#grid.arrange(p1, p2, p3, p4, nrow = 2, common.legend = TRUE)
+#combined <- p1 + p2 + p3 + p4 & theme(legend.position = "bottom")
+#combined + plot_layout(guides = "collect") #+ plot_annotation(title = "Distributions for Demographic Parameters")
+
+arrange <- ggarrange(p1, p2, p3, p4, ncol = 2, nrow = 2, legend = "bottom")
+arrange
+
+ggsave(filename="images/histograms_select.eps", plot = arrange)
+```
+
+
+```{r hists_norm_gg_full, echo = FALSE, fig.align = "center"}
+
+r_001 <- rtruncnorm(n, r_mean, 0.001)
+s_juv_001 <- rtruncnorm(n, s_juv_mean, 0.001)
+s_ad_001 <- rtruncnorm(n, s_ad_mean, 0.001)
+b_001 <- rtruncnorm(n, b_mean, 0.001)
+
+r_01 <- rtruncnorm(n, r_mean, 0.05)
+s_juv_01 <- rtruncnorm(n, s_juv_mean, 0.05)
+s_ad_01 <- rtruncnorm(n, s_ad_mean, 0.05)
+b_01 <- rtruncnorm(n, b_mean, 0.05)
+
+r_1 <- rtruncnorm(n, r_mean, 0.1)
+s_juv_1 <- rtruncnorm(n, s_juv_mean, 0.1)
+s_ad_1 <- rtruncnorm(n, s_ad_mean, 0.1)
+b_1 <- rtruncnorm(n, b_mean, 0.1)
+
+
+df <- data.frame(r_001 = r_001, r_01 = r_01, r_1 = r_1, s_juv_001 = s_juv_001, s_juv_01 = s_juv_01, s_juv_1 = s_juv_1, s_ad_001 = s_ad_001, s_ad_01 = s_ad_01, s_ad_1 = s_ad_1, b_001 = b_001, b_01 = b_01, b_1 = b_1)
+
+p1 <- ggplot(df, aes(r_001, colour = "#638475", fill = "#638475")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#638475", show.legend = FALSE) +
+  scale_fill_manual(values = c("#638475")) +
+  scale_colour_manual(values = c("#638475")) +
+  xlim(0,1) + ylab("density") + xlab("r") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p2 <- ggplot(df, aes(r_01, colour = "#638475", fill = "#638475")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#638475", show.legend = FALSE) +
+  scale_fill_manual(values = c("#638475")) +
+  scale_colour_manual(values = c("#638475")) +
+  xlim(0,1) + ylab("density") + xlab("r") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p3 <- ggplot(df, aes(r_1, colour = "#638475", fill = "#638475")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#638475", show.legend = FALSE) +
+  scale_fill_manual(values = c("#638475")) +
+  scale_colour_manual(values = c("#638475")) +
+  xlim(0,1) + ylab("density") + xlab("r") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p4 <- ggplot(df, aes(s_juv_001, colour = "#FF5666", fill = "#FF5666")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FF5666", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FF5666")) +
+  scale_colour_manual(values = c("#FF5666")) +
+  xlim(0,1) + ylab("") + xlab("s_juv") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p5 <- ggplot(df, aes(s_juv_01, colour = "#FF5666", fill = "#FF5666")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FF5666", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FF5666")) +
+  scale_colour_manual(values = c("#FF5666")) +
+  xlim(0,1) + ylab("") + xlab("s_juv") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p6 <- ggplot(df, aes(s_juv_1, colour = "#FF5666", fill = "#FF5666")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FF5666", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FF5666")) +
+  scale_colour_manual(values = c("#FF5666")) +
+  xlim(0,1) + ylab("") + xlab("s_juv") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p7 <- ggplot(df, aes(s_ad_001, colour = "#FFB86F", fill = "#FFB86F")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FFB86F", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FFB86F")) +
+  scale_colour_manual(values = c("#FFB86F")) +
+  xlim(0,1) + ylab("") + xlab("s_ad") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p8 <- ggplot(df, aes(s_ad_01, colour = "#FFB86F", fill = "#FFB86F")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FFB86F", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FFB86F")) +
+  scale_colour_manual(values = c("#FFB86F")) +
+  xlim(0,1) + ylab("") + xlab("s_ad") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p9 <- ggplot(df, aes(s_ad_1, colour = "#FFB86F", fill = "#FFB86F")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FFB86F", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FFB86F")) +
+  scale_colour_manual(values = c("#FFB86F")) +
+  xlim(0,1) + ylab("") + xlab("s_ad") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p10 <- ggplot(df, aes(b_001, colour = "#3E2F5B", fill = "#3E2F5B")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#3E2F5B", show.legend = FALSE) +
+  scale_fill_manual(values = c("#3E2F5B")) +
+  scale_colour_manual(values = c("#3E2F5B")) +
+  xlim(0,1) + ylab("") + xlab("b") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p11 <- ggplot(df, aes(b_01, colour = "#3E2F5B", fill = "#3E2F5B")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#3E2F5B", show.legend = FALSE) +
+  scale_fill_manual(values = c("#3E2F5B")) +
+  scale_colour_manual(values = c("#3E2F5B")) +
+  xlim(0,1) + ylab("") + xlab("b") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p12 <- ggplot(df, aes(b_1, colour = "#3E2F5B", fill = "#3E2F5B")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#3E2F5B", show.legend = FALSE) +
+  scale_fill_manual(values = c("#3E2F5B")) +
+  scale_colour_manual(values = c("#3E2F5B")) +
+  xlim(0,1) + ylab("") + xlab("b") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+grid.arrange(p1,p4,p7,p10,p2,p5,p8,p11,p3,p6,p9,p12, ncol = 4)
+#combined <- p1 + p2 + p3 + p4 & theme(legend.position = "bottom")
+#combined + plot_layout(guides = "collect") #+ plot_annotation(title = "Distributions for Demographic Parameters")
+```
+
+| **parameter** | **input mean** | **realized mean** | **difference in means** | **input sd** | **realized sd** | **difference in sd** |
+|---------------|----------------|-------------------|-------------------------|--------------|-----------------|-------------------------|
+| r             |`r round(r_mean,3)`|`r round(mean(r_001),3)`|`r r_mean - mean(r_001)`| 0.001|`r round(sd(r_001),3)`|`r r_mean - mean(r_001)`|
+|               |`r round(r_mean,3)`|`r round(mean(r_01),3)`|`r r_mean - mean(r_01)`| 0.01|`r round(sd(r_01),3)`|`r r_mean - mean(r_01)`|
+|               |`r round(r_mean,3)`|`r round(mean(r_1),3)`|`r r_mean - mean(r_1)`| 0.1|`r round(sd(r_1),3)`|`r r_mean - mean(r_1)`|
+| s_juv         |`r round(s_juv_mean,3)`|`r round(mean(s_juv_001),3)`|`r s_juv_mean - mean(s_juv_001)`| 0.001|`r round(sd(s_juv_001),3)`|`r s_juv_mean - mean(s_juv_001)`|
+|               |`r round(s_juv_mean,3)`|`r round(mean(s_juv_01),3)`|`r s_juv_mean - mean(s_juv_01)`| 0.01|`r round(sd(s_juv_01),3)`|`r s_juv_mean - mean(s_juv_01)`|
+|               |`r round(s_juv_mean,3)`|`r round(mean(s_juv_1),3)`|`r s_juv_mean - mean(s_juv_1)`| 0.1|`r round(sd(s_juv_1),3)`|`r s_juv_mean - mean(s_juv_1)`|
+| s_ad          |`r round(s_ad_mean,3)`|`r round(mean(s_ad_001),3)`|`r s_ad_mean - mean(s_ad_001)`| 0.001|`r round(sd(s_ad_001),3)`|`r s_ad_mean - mean(s_ad_001)`|
+|               |`r round(s_ad_mean,3)`|`r round(mean(s_ad_01),3)`|`r s_ad_mean - mean(s_ad_01)`| 0.01|`r round(sd(s_ad_01),3)`|`r s_ad_mean - mean(s_ad_01)`|
+|               |`r round(s_ad_mean,3)`|`r round(mean(s_ad_1),3)`|`r s_ad_mean - mean(s_ad_1)`| 0.1|`r round(sd(s_ad_1),3)`|`r s_ad_mean - mean(s_ad_1)`|
+| b             |`r round(b_mean,3)`|`r round(mean(b_001),3)`|`r b_mean - mean(b_001)`| 0.001|`r round(sd(b_001),3)`|`r b_mean - mean(b_001)`|
+|               |`r round(b_mean,3)`|`r round(mean(b_01),3)`|`r b_mean - mean(b_01)`| 0.01|`r round(sd(b_01),3)`|`r b_mean - mean(b_01)`|
+|               |`r round(b_mean,3)`|`r round(mean(b_1),3)`|`r b_mean - mean(b_1)`| 0.1|`r round(sd(b_1),3)`|`r b_mean - mean(b_1)`|
+
+## Non-Gaussian-Truncated Inputs
+
+```{r hists_t, echo = FALSE, fig.align = "center"}
+par(mfrow=c(3,4))
+par(mar=c(2.5,2,2,2))
+
+r_001 <- rtrunct(1e6, r_mean, 0.001)
+s_juv_001 <- rtrunct(1e6, s_juv_mean, 0.001)
+s_ad_001 <- rtrunct(1e6, s_ad_mean, 0.001)
+b_001 <- rtrunct(1e6, b_mean, 0.001)
+
+r_01 <- rtrunct(1e6, r_mean, 0.05)
+s_juv_01 <- rtrunct(1e6, s_juv_mean, 0.05)
+s_ad_01 <- rtrunct(1e6, s_ad_mean, 0.05)
+b_01 <- rtrunct(1e6, b_mean, 0.05)
+
+r_1 <- rtrunct(1e6, r_mean, 0.1)
+s_juv_1 <- rtrunct(1e6, s_juv_mean, 0.1)
+s_ad_1 <- rtrunct(1e6, s_ad_mean, 0.1)
+b_1 <- rtrunct(1e6, b_mean, 0.1)
+
+hist(r_001, seq(0,1, length.out=150), xlim = c(0,1), main = "r, sd = 0.001", ylab = "")
+hist(s_juv_001, seq(0,1, length.out=150), xlim = c(0,1), main = "s_juv, sd = 0.001", ylab = "", xlab = "")
+hist(s_ad_001, seq(0,1, length.out=150), xlim = c(0,1), main = "s_ad, sd = 0.001", ylab = "", xlab = "")
+hist(b_001, seq(0,1, length.out=150), xlim = c(0,1), main = "b, sd = 0.001", ylab = "", xlab = "")
+
+hist(r_01, seq(0,1, length.out=150), xlim = c(0,1), main = "r, sd = 0.01", ylab = "")
+hist(s_juv_01, seq(0,1, length.out=150), xlim = c(0,1), main = "s_juv, sd = 0.01", ylab = "", xlab = "")
+hist(s_ad_01, seq(0,1, length.out=150), xlim = c(0,1), main = "s_ad, sd = 0.01", ylab = "", xlab = "")
+hist(b_01, seq(0,1, length.out=150), xlim = c(0,1), main = "b, sd = 0.01", ylab = "", xlab = "")
+
+hist(r_1, seq(0,1, length.out=150), xlim = c(0,1), main = "r, sd = 0.1", ylab = "")
+hist(s_juv_1, seq(0,1, length.out=150), xlim = c(0,1), main = "s_juv, sd = 0.1", ylab = "", xlab = "")
+hist(s_ad_1, seq(0,1, length.out=150), xlim = c(0,1), main = "s_ad, sd = 0.1", ylab = "", xlab = "")
+hist(b_1, seq(0,1, length.out=150), xlim = c(0,1), main = "b, sd = 0.1", ylab = "", xlab = "")
+```
+
+
+```{r hists_t_gg_full, echo = FALSE, fig.align = "center"}
+df <- data.frame(r_001 = r_001, r_01 = r_01, r_1 = r_1, s_juv_001 = s_juv_001, s_juv_01 = s_juv_01, s_juv_1 = s_juv_1, s_ad_001 = s_ad_001, s_ad_01 = s_ad_01, s_ad_1 = s_ad_1, b_001 = b_001, b_01 = b_01, b_1 = b_1)
+
+p1 <- ggplot(df, aes(r_001, colour = "#638475", fill = "#638475")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#638475", show.legend = FALSE) +
+  scale_fill_manual(values = c("#638475")) +
+  scale_colour_manual(values = c("#638475")) +
+  xlim(0,1) + ylab("density") + xlab("r") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p2 <- ggplot(df, aes(r_01, colour = "#638475", fill = "#638475")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#638475", show.legend = FALSE) +
+  scale_fill_manual(values = c("#638475")) +
+  scale_colour_manual(values = c("#638475")) +
+  xlim(0,1) + ylab("density") + xlab("r") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p3 <- ggplot(df, aes(r_1, colour = "#638475", fill = "#638475")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#638475", show.legend = FALSE) +
+  scale_fill_manual(values = c("#638475")) +
+  scale_colour_manual(values = c("#638475")) +
+  xlim(0,1) + ylab("density") + xlab("r") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p4 <- ggplot(df, aes(s_juv_001, colour = "#FF5666", fill = "#FF5666")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FF5666", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FF5666")) +
+  scale_colour_manual(values = c("#FF5666")) +
+  xlim(0,1) + ylab("") + xlab("s_juv") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p5 <- ggplot(df, aes(s_juv_01, colour = "#FF5666", fill = "#FF5666")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FF5666", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FF5666")) +
+  scale_colour_manual(values = c("#FF5666")) +
+  xlim(0,1) + ylab("") + xlab("s_juv") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p6 <- ggplot(df, aes(s_juv_1, colour = "#FF5666", fill = "#FF5666")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FF5666", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FF5666")) +
+  scale_colour_manual(values = c("#FF5666")) +
+  xlim(0,1) + ylab("") + xlab("s_juv") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p7 <- ggplot(df, aes(s_ad_001, colour = "#FFB86F", fill = "#FFB86F")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FFB86F", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FFB86F")) +
+  scale_colour_manual(values = c("#FFB86F")) +
+  xlim(0,1) + ylab("") + xlab("s_ad") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p8 <- ggplot(df, aes(s_ad_01, colour = "#FFB86F", fill = "#FFB86F")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FFB86F", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FFB86F")) +
+  scale_colour_manual(values = c("#FFB86F")) +
+  xlim(0,1) + ylab("") + xlab("s_ad") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p9 <- ggplot(df, aes(s_ad_1, colour = "#FFB86F", fill = "#FFB86F")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#FFB86F", show.legend = FALSE) +
+  scale_fill_manual(values = c("#FFB86F")) +
+  scale_colour_manual(values = c("#FFB86F")) +
+  xlim(0,1) + ylab("") + xlab("s_ad") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p10 <- ggplot(df, aes(b_001, colour = "#3E2F5B", fill = "#3E2F5B")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#3E2F5B", show.legend = FALSE) +
+  scale_fill_manual(values = c("#3E2F5B")) +
+  scale_colour_manual(values = c("#3E2F5B")) +
+  xlim(0,1) + ylab("") + xlab("b") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.001$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p11 <- ggplot(df, aes(b_01, colour = "#3E2F5B", fill = "#3E2F5B")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#3E2F5B", show.legend = FALSE) +
+  scale_fill_manual(values = c("#3E2F5B")) +
+  scale_colour_manual(values = c("#3E2F5B")) +
+  xlim(0,1) + ylab("") + xlab("b") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.05$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+p12 <- ggplot(df, aes(b_1, colour = "#3E2F5B", fill = "#3E2F5B")) +
+  geom_density(aes(y = stat(count/sum(count))), alpha = 0.7, fill = "#3E2F5B", show.legend = FALSE) +
+  scale_fill_manual(values = c("#3E2F5B")) +
+  scale_colour_manual(values = c("#3E2F5B")) +
+  xlim(0,1) + ylab("") + xlab("b") +
+  annotation_custom(grobTree(textGrob(TeX(r'($\sigma = 0.1$)'), x=0.025,  y=0.94, hjust=0, gp=gpar(col="black", fontsize=10)))) +
+  theme(axis.text.x = element_text(angle = 45))
+
+
+grid.arrange(p1,p4,p7,p10,p2,p5,p8,p11,p3,p6,p9,p12, ncol = 4)
+#combined <- p1 + p2 + p3 + p4 & theme(legend.position = "bottom")
+#combined + plot_layout(guides = "collect") #+ plot_annotation(title = "Distributions for Demographic Parameters")
+```
+
+
+
+| **parameter** | **input mean** | **realized mean** | **difference in means** | **input sd** | **realized sd** | **difference in sd** |
+|---------------|----------------|-------------------|-------------------------|--------------|-----------------|-------------------------|
+| r             |`r round(r_mean,3)`|`r round(mean(r_001),3)`|`r r_mean - mean(r_001)`| 0.001|`r round(sd(r_001),3)`|`r r_mean - mean(r_001)`|
+|               |`r round(r_mean,3)`|`r round(mean(r_01),3)`|`r r_mean - mean(r_01)`| 0.01|`r round(sd(r_01),3)`|`r r_mean - mean(r_01)`|
+|               |`r round(r_mean,3)`|`r round(mean(r_1),3)`|`r r_mean - mean(r_1)`| 0.1|`r round(sd(r_1),3)`|`r r_mean - mean(r_1)`|
+| s_juv         |`r round(s_juv_mean,3)`|`r round(mean(s_juv_001),3)`|`r s_juv_mean - mean(s_juv_001)`| 0.001|`r round(sd(s_juv_001),3)`|`r s_juv_mean - mean(s_juv_001)`|
+|               |`r round(s_juv_mean,3)`|`r round(mean(s_juv_01),3)`|`r s_juv_mean - mean(s_juv_01)`| 0.01|`r round(sd(s_juv_01),3)`|`r s_juv_mean - mean(s_juv_01)`|
+|               |`r round(s_juv_mean,3)`|`r round(mean(s_juv_1),3)`|`r s_juv_mean - mean(s_juv_1)`| 0.1|`r round(sd(s_juv_1),3)`|`r s_juv_mean - mean(s_juv_1)`|
+| s_ad          |`r round(s_ad_mean,3)`|`r round(mean(s_ad_001),3)`|`r s_ad_mean - mean(s_ad_001)`| 0.001|`r round(sd(s_ad_001),3)`|`r s_ad_mean - mean(s_ad_001)`|
+|               |`r round(s_ad_mean,3)`|`r round(mean(s_ad_01),3)`|`r s_ad_mean - mean(s_ad_01)`| 0.01|`r round(sd(s_ad_01),3)`|`r s_ad_mean - mean(s_ad_01)`|
+|               |`r round(s_ad_mean,3)`|`r round(mean(s_ad_1),3)`|`r s_ad_mean - mean(s_ad_1)`| 0.1|`r round(sd(s_ad_1),3)`|`r s_ad_mean - mean(s_ad_1)`|
+| b             |`r round(b_mean,3)`|`r round(mean(b_001),3)`|`r b_mean - mean(b_001)`| 0.001|`r round(sd(b_001),3)`|`r b_mean - mean(b_001)`|
+|               |`r round(b_mean,3)`|`r round(mean(b_01),3)`|`r b_mean - mean(b_01)`| 0.01|`r round(sd(b_01),3)`|`r b_mean - mean(b_01)`|
+|               |`r round(b_mean,3)`|`r round(mean(b_1),3)`|`r b_mean - mean(b_1)`| 0.1|`r round(sd(b_1),3)`|`r b_mean - mean(b_1)`|
+
+
+
+## Gaussian vs. Non-Gaussian Inputs: Variation in Abundance ANOVA
+### Significantly less Variation in B_total[15,15,15,15,,] with Student t Inputs (vs. Gaussian Inputs)
+
+```{r anova_sd_prep, echo = FALSE, fig.align = "center"}
+two_steps_mat <- matrix(rep(1:2,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 2))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- sd(B_total_norm[15,15,15,15,n,])
+  anova_B[n,2] <- sd(B_total_t[15,15,15,15,n,])
+}
+plot(two_steps_mat, anova_B, main = "sd(Abundance[15,15,15,15,,]) for Gaussian vs. Non-Gaussian Inputs", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:2, labels=c("Gaussian Inputs", "Student t Inputs"))
+
+anova_df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df) <- c("model_id", "sd_B")
+for (n in 1:num_runs_each){
+  anova_df[nrow(anova_df) + 1, ] <- c(1, anova_B[n,1])
+  anova_df[nrow(anova_df) + 1, ] <- c(2, anova_B[n,2])
+}
+
+```
+
+```{r anova_sd, echo = FALSE}
+#summary(anova_df)
+
+anova_oneway <- aov(sd_B ~ model_id, data = anova_df)
+summary(anova_oneway)
+```
+
+```{r anova_sd_gg, echo = FALSE}
+ggplot(anova_df, aes(model_id, sd_B, group = model_id)) + 
+  geom_boxplot(width = 0.4, fill = "#7B8CDE", notch = FALSE) + xlab("Variaiton of Inputs") + ylab("sd(Abundance)") + scale_x_continuous(breaks=c(1,2), labels = c("Gaussian", "Student t")) + labs(title = "sd(Abundance) for Gaussian vs. Non-Gaussian Inputs")
+
+ggsave(filename="images/anova_norm_vs_heavy_sd_abundance.eps")
+```
+
+
+## Gaussian vs. Non-Gaussian Inputs: Heavy-tailedness of Abundance Distribution ANOVA
+### No significantly difference in heavier-tailedness of B_total[15,15,15,15,,] with Student t Inputs vs. Gaussian Inputs
+
+```{r anova_nu_prep, echo = FALSE, fig.align = "center"}
+two_steps_mat <- matrix(rep(1:2,num_runs_each), nrow=num_runs_each, byrow = T)
+
+anova_B <- array(NA, dim = c(num_runs_each, 2))
+for (n in 1:num_runs_each){
+  anova_B[n,1] <- B_nus_norm[15,15,15,15,n]
+  anova_B[n,2] <- B_nus_t[15,15,15,15,n]
+}
+plot(two_steps_mat, anova_B, main = "Nu(Abundance[15,15,15,15,,]) for Gaussian vs. Non-Gaussian Inputs", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=1:2, labels=c("Gaussian Inputs", "Student t Inputs"))
+
+anova_df <- data.frame(matrix(ncol = 2, nrow = 0))
+colnames(anova_df) <- c("model_id", "nu_B")
+for (n in 1:num_runs_each){
+  anova_df[nrow(anova_df) + 1, ] <- c(1, anova_B[n,1])
+  anova_df[nrow(anova_df) + 1, ] <- c(2, anova_B[n,2])
+}
+
+```
+
+```{r anova_nu, echo = FALSE}
+#summary(anova_df)
+
+anova_oneway <- aov(nu_B ~ model_id, data = anova_df)
+summary(anova_oneway)
+```
+
+
+### Percentage of Nus < 30 over all Variations
+
+```{r anova_percents_prep, echo = FALSE, fig.align = "center"}
+
+percents_norm <- array(NA, dim = c(num_steps,num_steps,num_steps,num_steps))
+percents_t <- array(NA, dim = c(num_steps,num_steps,num_steps,num_steps))
+
+for (h in 1:num_steps){
+  for (i in 1:num_steps){
+    for (j in 1:num_steps){
+      for (k in 1:num_steps){
+        percents_norm[h,i,j,k] <- length(which(B_nus_norm[h,i,j,k,] < 30)) / num_runs_each
+        percents_t[h,i,j,k] <- length(which(B_nus_t[h,i,j,k,] < 30)) / num_runs_each
+      }
+    }
+  }
+}
+
+percents_vec_norm <- as.vector(percents_norm)
+percents_vec_t <- as.vector(percents_t)
+
+all_labels <- c(rep(0, length(percents_vec_norm)), rep(1, length(percents_vec_t)))
+
+all_percents <- c(percents_vec_norm, percents_vec_t)
+
+plot(all_labels, all_percents, main = "% of Nus < 30 for Gaussian vs. Non-Gaussian Inputs", pch = 19, col = alpha("purple", 0.40), xaxt = 'n', xlab = " ")
+axis(1, at=0:1, labels=c("Gaussian Inputs", "Student t Inputs"))
+
+anova_df <- data.frame(Percentage = all_percents, Inputs = all_labels)
+
+```
+
+```{r anova_percents, echo = FALSE}
+anova_oneway <- aov(Percentage ~ Inputs, data = anova_df)
+summary(anova_oneway)
+```
+
