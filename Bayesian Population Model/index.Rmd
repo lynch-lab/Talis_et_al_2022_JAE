@@ -1,0 +1,78 @@
+--- 
+title: "Adpated MAPPPD Adélie Model - Student t"
+author: "Christian Che-Castaldo, Emma Talis"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+description: "Documention for adapted MAPPPD Adélie model - Student t Distribution"
+---
+
+# Required
+
+## R Packages
+
+The following R packages are required to perform this analysis.
+
+```{r setup_false, eval = FALSE, echo = TRUE}
+library(mapppdr)
+library(tidyverse)
+library(patchwork)
+library(leaflet)
+library(CCAMLRGIS)
+library(rjags)
+library(MCMCvis)
+library(parallel)
+library(stringi)
+library(pander)
+library(testthat)
+library(stringi)
+library(LaplacesDemon)
+```
+
+```{r setup, include = FALSE}
+
+# old lab comp
+#setwd("/Volumes/GoogleDrive-106535158817273811802/My Drive/Heavy Tailed Distributions/Final Adele Models Submission/acbr_m-vrajyz32bdpr_studentt_nosite_3gamma_16sigmas")
+# yellow lab comp
+setwd("~/GoogleDrive/Heavy Tailed Distributions/MAPPPD_adelie_models-main/acbr_m-vrajyz32bdpr_studentt_nosite_3gamma_16sigmas")
+library(mapppdr)
+library(tidyverse)
+library(patchwork)
+library(leaflet)
+library(CCAMLRGIS)
+library(rjags)
+library(MCMCvis)
+library(bayesplot)
+library(parallel)
+library(stringi)
+library(pander)
+library(testthat)
+library(stringi)
+library(truncnorm)
+library(LaplacesDemon) ### student t r dist
+
+# load needed objects from completed JAGS sim and actual runs
+load(file = "_static/model_sim_rinits_output.rda")
+load(file = "_static/model_sim.rda")
+load(file = "_static/model_data_rinits_output.rda")
+load(file = "_static/model_data.rda")
+load(file = "_static/SiteList.rda")
+load(file = "_static/w_df.rda")
+
+options(dplyr.summarise.inform = FALSE)
+```
+
+## Model ID
+
+```{r, echo = FALSE} 
+set.seed(20)
+(id <- paste0("m-", stri_rand_strings(1, 12, pattern = "[a-z0-9]"), "-studentt"))
+```
+
+## Environment
+
+This analysis was performed using the R computing environment specified below.
+
+````{r, echo = FALSE}
+pander(sessionInfo())
+```

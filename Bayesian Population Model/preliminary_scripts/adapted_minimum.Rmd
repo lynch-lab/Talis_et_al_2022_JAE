@@ -1,0 +1,540 @@
+--- 
+title: "MAPPPD Adélie Model"
+author: "Emma Talis, Christian Che-Castaldo"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+documentclass: book
+---
+
+# Required
+
+## R Packages
+```{r setup, include = FALSE}
+library(mapppdr)
+library(tidyverse)
+library(patchwork)
+library(leaflet)
+library(CCAMLRGIS)
+library(rjags)
+library(MCMCvis)
+library(bayesplot)
+library(parallel)
+library(stringi)
+library(pander)
+library(testthat)
+library(stringi)
+library(LaplacesDemon) ### student t r dist
+
+setwd("~/Documents/MAPPPD_adelie_models-main/m-vrajyz32bdpr_studentt")
+```
+
+# Data Setup
+
+## MAPPPDR to JAGS
+```{r, eval = TRUE, echo = TRUE, message = FALSE}
+min_season <- 1970
+max_season <- 2020
+species <- "ADPE"
+
+# assign the total number of seasons as n_seasons
+(n_seasons <- (max_season - min_season) + 1)
+
+SiteList <- mapppdr::penguin_obs %>%
+  # keep all sites that have at least 1 count between min and max season
+  dplyr::filter(count > 0 & species_id == species & season >= min_season & season <= max_season) %>%
+  # create relative season index 
+  mutate(season_relative = season - min_season + 1) %>%
+  # determine first season a count is observed for each site
+  group_by(site_id) %>%
+  summarise(initial_season = min(season_relative)) %>%
+  ungroup() %>%
+  # join to get other site specific covariates for visualization purposes
+  left_join(mapppdr::sites, by = "site_id") %>%
+  # create site index for model and visualization
+  mutate(site = as.numeric(as.factor(site_id))) %>%
+  # great regional groupings
+  mutate(region_id = case_when(
+    region == "Central-west Antarctic Peninsula" ~ 1, 
+    region == "Northwest Antarctic Peninsula" ~ 1,
+    region == "Southwest Antarctic Peninsula" ~ 2, 
+    region == "Palmer Land" ~ 2, 
+    region == "Elephant Island" ~ 3, 
+    region == "South Orkney Islands" ~ 3, 
+    region == "South Shetland Islands" ~ 3, 
+    region == "Northeast Antarctic Peninsula" ~ 4,     
+    ccamlr_id == "88.1" ~ 5, 
+    ccamlr_id == "88.2" ~ 5, 
+    ccamlr_id == "88.3" ~ 6,
+    ccamlr_id == "58.4.1" ~ 7, 
+    ccamlr_id == "58.4.2" ~ 8)) %>%   
+  mutate(ccamlr = case_when(
+    ccamlr_id == "48.1" ~ 1, 
+    ccamlr_id == "48.2" ~ 1,
+    ccamlr_id == "88.1" ~ 2, 
+    ccamlr_id == "88.2" ~ 2, 
+    ccamlr_id == "88.3" ~ 2,
+    ccamlr_id == "58.4.1" ~ 2, 
+    ccamlr_id == "58.4.2" ~ 2)) %>%     
+  dplyr::select(site_id, site_name, ccamlr, ccamlr_id, region = region_id, site, initial_season, latitude, longitude)
+
+(n_sites <- nrow(SiteList))
+(n_regions <- length(unique(SiteList$region)))
+(n_ccamlr <- length(unique(SiteList$ccamlr)))
+
+# create site x season template which is used throughout analysis
+w_template <- SiteList %>%
+  dplyr::select(site_id, site) %>%
+  # expand each site by the number of seasons
+  uncount(n_seasons) %>%
+  # create relative season index for each site
+  mutate(season_relative = rep(1:n_seasons, n_sites)) %>%
+  # create season var from relative season index
+  mutate(season = season_relative + min_season - 1) %>%
+  arrange(season_relative, site)
+
+w_df <- mapppdr::penguin_obs %>%
+  # keep all presence/absence data and assign observation type as 1 (observed)
+  dplyr::filter(species_id == species & season >= min_season & season <= max_season) %>%
+  dplyr::select(site_id, season, presence) %>%
+  mutate(known_w = 1) %>%
+  # determine for each site x season if breeding is observed or assumed
+  group_by(site_id, season) %>%
+  summarise(w = base::max(presence), known_w = base::max(known_w)) %>%
+  ungroup() %>%
+  # join with w_template to fill in missing site x seasons with no presence/absence data
+  right_join(w_template, by = c("site_id", "season")) %>%
+  # assign observation type as 0 (imputed)
+  mutate(known_w = replace(known_w, is.na(known_w), 0)) %>%
+  arrange(site_id, season) %>%
+  # impute missing presence/absence data using the following assumptions
+  # ASSSUMPTION: fill in NA between (1,1) with 1
+  # ASSSUMPTION: fill in NA between (0,1) with 0
+  # ASSSUMPTION: fill in NA between (1,0) with 1
+  # ASSSUMPTION: fill in NA between (.,1) and (1,.) with 1
+  # ASSSUMPTION: fill in NA between (.,0) and (0,.) with 0
+  dplyr::group_by(site_id) %>%
+  tidyr::fill(w, .direction = "downup") %>%
+  dplyr::ungroup() %>%
+  # create second site_id var for plotting sites alphabetically in ggplot
+  mutate(site_id_rev = factor(site_id, levels = rev(sort(unique(site_id))))) %>%
+  dplyr::select(site_id, site_id_rev, season, site, season_relative, w, known_w)
+
+# convert w to matrix to be used in model
+w <- w_df %>%
+  dplyr::select(site, season_relative, w) %>%
+  # create matrix where rows are sites and columns are seasons
+  pivot_wider(names_from = season_relative, values_from = w, names_sort = TRUE) %>%
+  dplyr::select(-site) %>%
+  as.matrix()
+
+abundance <- mapppdr::penguin_obs %>%
+  # keep all counts between min and max season
+  dplyr::filter(count > 0 & species_id == species & season >= min_season & season <= max_season) %>%
+  # join to get site index and initial season
+  right_join(SiteList, by = "site_id") %>%
+  # create relative season index 
+  mutate(season_relative = season - min_season + 1) %>%
+  # ASSUMPTION: increase accuracy category of all adult counts by + 3 with a max error of 5
+  rowwise() %>%
+  mutate(accuracy = replace(accuracy, type == "adults", base::min((accuracy[type == "adults"] + 3), 5))) %>%
+  ungroup() %>%  
+  mutate(type = replace(type, type == "adults", "nests")) %>%
+  # ASSUMPTION: keep maximum nest and chick count reported each season for a site
+  group_by(site_id, season, season_relative, type) %>%
+  arrange(desc(count), accuracy) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  # ASSUMPTION: convert accuracy to the following errors/precisions
+  mutate(sigma = case_when(
+    accuracy == 1 ~ 0.02490061, 
+    accuracy == 2 ~ 0.04955838,
+    accuracy == 3 ~ 0.1201131, 
+    accuracy == 4 ~ 0.2212992, 
+    accuracy == 5 ~ 0.4472728)) %>%
+  mutate(precision = case_when(
+    accuracy == 1 ~ 1/0.02490061^2, 
+    accuracy == 2 ~ 1/0.04955838^2,
+    accuracy == 3 ~ 1/0.1201131^2, 
+    accuracy == 4 ~ 1/0.2212992^2, 
+    accuracy == 5 ~ 1/0.4472728^2)) %>%  
+  dplyr::select(site_id, site, ccamlr, region, season, season_relative, initial_season, type, 
+    count, presence, accuracy, sigma, precision) %>%
+  arrange(site, season_relative, type, -count, accuracy, sigma, precision)  
+
+abundance_initial <- abundance %>%
+  # keep first observed count for each site's time series
+  dplyr::filter(initial_season == season_relative) %>%
+  # ASSUMPTION: if no nest count is available in the initial season and a chick count is then
+  # assume chick count is 1:1 nest count
+  group_by(site_id, season, site, season_relative) %>%
+  arrange(desc(type)) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  dplyr::select(site_id, season, site, ccamlr, region, season_relative, count, sigma, precision)
+
+abundance_nests <- abundance %>%
+  # keep all nest counts after the initial season
+  dplyr::filter(initial_season != season_relative & type == "nests") %>%
+  dplyr::select(site_id, season, site, ccamlr, region, season_relative, count, sigma, precision)
+
+abundance_chicks <- rbind(
+  # keep all chick counts after the initial season
+  abundance %>%
+    dplyr::filter(initial_season != season_relative & type == "chicks") %>%
+    dplyr::select(site_id, ccamlr, region, season, site, season_relative, count, sigma, precision),
+  # append chick counts from initial season that were not converted to nest counts
+  # meaning there was both a chick and nest count in the initial season
+  abundance %>%
+    dplyr::filter(initial_season == season_relative) %>%
+    group_by(site_id, season, site, season_relative) %>%
+    arrange(desc(type)) %>%
+    slice(2) %>%
+    ungroup() %>%
+    dplyr::select(site_id, site, ccamlr, region, season, season_relative, count, sigma, precision))
+
+# moment match alpha shape and rate parameters for breeding productivity
+mu <- .5
+sigma <- .25
+a <- (mu^2 - mu^3 - mu * sigma^3) / sigma^2
+b <- (mu - 2* mu^2 + mu^3 - sigma^2 + mu * sigma^3) / sigma^2
+
+# create the data list for the JAGS model
+model_data <- list(
+  nests = nrow(abundance_nests),
+  y_n = log(abundance_nests$count), 
+  precision_n = abundance_nests$precision,
+  site_n = abundance_nests$site,
+  season_n = abundance_nests$season_relative,
+  chicks = nrow(abundance_chicks),
+  y_c = log(abundance_chicks$count), 
+  precision_c = abundance_chicks$precision,
+  site_c = abundance_chicks$site,
+  season_c = abundance_chicks$season_relative,
+  y_i = log(abundance_initial$count),
+  precision_i = abundance_initial$precision,
+  n_sites = n_sites,
+  n_seasons = n_seasons,
+  # n_regions = n_regions,
+  # n_ccamlr = n_ccamlr,  
+  s = as.vector(SiteList$initial_season),
+  # region = as.vector(SiteList$region),
+  # ccamlr = as.vector(SiteList$ccamlr), 
+  w = w,
+  a = a,
+  b = b)
+```
+
+# JAGS Code
+
+```{r}
+{ 
+sink("_static/jags_model.jags")
+cat("
+
+model {
+
+# process variance prior
+sigma ~ dunif(0, 1)
+tau <- pow(sigma, -2)
+nu ~ dunif(0, 100)
+
+
+# breeding success: chick conversion priors
+for (i in 1:chicks) {
+  alpha[i] ~ dbeta(a, b)
+}
+
+for (i in 1:n_sites) {
+  lz[i, s[i]] ~ dt(0, .001, 5)
+}
+
+# intercept prior
+gamma ~ dnorm(0, 2^.5)
+
+# site effects
+for (i in 1:n_sites) {
+  eta[i] ~ dnorm(0, tau_site)
+}
+sigma_site ~ dunif(0, 1)
+tau_site <- pow(sigma_site, -2)
+
+# observation models
+# nests
+for (i in 1:nests) {
+  y_n[i] ~ dnorm(mu_y_n[i], precision_n[i])
+  mu_y_n[i] <- lz[site_n[i], season_n[i]]
+  y_n_new[i] ~ dnorm(mu_y_n[i], precision_n[i])
+  y_n_sq[i] <- pow((y_n[i] - mu_y_n[i]), 2)
+  y_n_sq_new[i] <- pow((y_n_new[i] - mu_y_n[i]), 2)
+}
+
+# chicks
+for (i in 1:chicks) {
+  N[i] <- 2 * round(exp(lz[site_c[i], season_c[i]]))
+  z_c[i] ~ dbin(alpha[i], N[i])
+  lz_c[i] <- log(z_c[i])
+  y_c[i] ~ dnorm(mu_y_c[i], precision_c[i])
+  mu_y_c[i] <- lz_c[i]
+  y_c_new[i] ~ dnorm(mu_y_c[i], precision_c[i])
+  y_c_sq[i] <- pow((y_c[i] - mu_y_c[i]), 2)
+  y_c_sq_new[i] <- pow((y_c_new[i] - mu_y_c[i]), 2)
+}
+
+# process model
+# growth rate    
+for (i in 1:n_sites) {
+    zr[i] <- gamma + eta[i]
+    for (t in 1:n_seasons) {
+      lza[i, t] <- lz[i, t] * w[i, t]
+    }
+}  
+
+# initial year abundance
+for (i in 1:n_sites) {
+  y_i[i] ~ dnorm(mu_y_i[i], precision_i[i])
+  mu_y_i[i] <- lz[i, s[i]]
+  y_i_new[i] ~ dnorm(mu_y_i[i], precision_i[i])
+  y_i_sq[i] <- pow((y_i[i] - mu_y_i[i]), 2)
+  y_i_sq_new[i] <- pow((y_i_new[i] - mu_y_i[i]), 2)
+  
+}
+
+# abundance: initial year + 1 through max season
+for (i in 1:n_sites) {
+  for (t in (s[i] + 1):n_seasons) {
+    lz[i, t] ~ dt(mu_lz[i, t], tau, nu) # fat-tailed
+    mu_lz[i, t] <- lz[i, t - 1] + zr[i]
+  }
+}
+
+# abundance: min season through intial year - 1
+for (i in 1:n_sites) {
+  for (t in 1:(s[i] - 1)) {
+    lz[i, s[i] - t] ~ dt(mu_lz[i, s[i] - t], tau, nu) # fat-tailed
+    mu_lz[i, s[i] - t] <- lz[i, s[i] - t + 1] - zr[i]
+  }
+}
+ 
+# posterior predictive checks
+y_n_sqs <- sum(y_n_sq[])
+y_n_sqs_new <- sum(y_n_sq_new[])
+y_i_sqs <- sum(y_i_sq[])
+y_i_sqs_new <- sum(y_i_sq_new[])
+y_c_sqs <- sum(y_c_sq[])
+y_c_sqs_new <- sum(y_c_sq_new[])
+
+# derived quantities
+for (i in 1:n_sites) {
+  l_p[i] <- exp(zr[i])
+  for (t in 2:n_seasons) {
+    l_a[i, t - 1] <- exp(lz[i, t] - lz[i, t - 1])
+    lw_a[i, t - 1] <- ifelse(sum(w[i, (t-1):t]) == 2, l_a[i, t - 1], 1)
+    lw_p[i, t - 1] <- ifelse(sum(w[i, (t-1):t]) == 2, l_p[i], 1)
+  }
+}
+
+for (i in 1:n_sites) {
+  x[i, 1:n_seasons] <- ifelse(sum(w[i, 1:n_seasons]) > 1, w[i, 1:n_seasons], rep(1, n_seasons))
+  gl_a[i] <- ifelse(sum(w[i, 1:n_seasons]) > 1, pow(prod(lw_a[i, ]), (1/(sum(x[i, 1:n_seasons]) - 1))), 0)
+  gl_p[i] <- ifelse(sum(w[i, 1:n_seasons]) > 1, pow(prod(lw_p[i, ]), (1/(sum(x[i, 1:n_seasons]) - 1))), 0)
+}
+
+}", fill = TRUE)
+sink()
+}
+```
+
+# Simulation
+
+## Simulate data
+
+```{r}
+library(LaplacesDemon)
+
+set.seed(5)
+sigma_sim <- .15
+sigma_site_sim <- .05
+gamma_sim <- 0
+nu_sim <- 5 ###
+eta_sim <- rnorm(n_sites, 0, sigma_site_sim)
+alpha_sim <- rbeta(nrow(abundance_chicks), a, b)
+site_n <- model_data$site_n
+season_n <- model_data$season_n
+site_c <- model_data$site_c
+season_c <- model_data$season_c
+s <- model_data$s
+# region <- model_data$region
+# ccamlr <- model_data$ccamlr
+sigma_n <- abundance_nests$sigma
+sigma_c <- abundance_chicks$sigma
+sigma_i <- abundance_initial$sigma
+y_n_sim <- y_c_sim <- y_i_sim <- z_c_sim <- N_sim <- gl_a_sim <- gl_p_sim <- NA
+zr_sim <-  NA ###
+lz_sim <- array(NA, dim = c(n_sites, n_seasons))
+l_a_sim <- l_p_sim <- lw_a_sim <- lw_p_sim <- array(NA, dim = c(n_sites, (n_seasons - 1)))
+
+for (i in 1:n_sites) {
+  lz_sim[i, s[i]] <- LaplacesDemon::rst(1, log(1000), .75, nu = 5)
+  for (t in (s[i] + 1):n_seasons) {
+    zr_sim[i] <- gamma_sim + eta_sim[i]
+    lz_sim[i, t] <- LaplacesDemon::rst(1, lz_sim[i, (t - 1)] + zr_sim[i], sigma_sim, nu_sim)
+  }
+  for (t in 1:(s[i] - 1)) {
+    zr_sim[i] <- gamma_sim + eta_sim[i]
+    lz_sim[i, (s[i] - t)] <- LaplacesDemon::rst(1, lz_sim[i, (s[i] - t + 1)] - zr_sim[i], sigma_sim, nu_sim)
+  }
+}
+
+for (i in 1:nrow(abundance_nests)) {
+  y_n_sim[i] <- rnorm(1, lz_sim[site_n[i], season_n[i]], sd = sigma_n[i])
+}
+for (i in 1:nrow(abundance_chicks)) {
+  N_sim[i] <- as.integer(2 * round(exp(lz_sim[site_c[i], season_c[i]])))
+  z_c_sim[i] <- base::max(rbinom(1, N_sim[i], prob = alpha_sim[i]), 1)
+  y_c_sim[i] <- rnorm(1, log(z_c_sim[i]), sd = sigma_c[i])
+}
+for (i in 1:nrow(abundance_initial)) {
+  y_i_sim[i] <- rnorm(1, lz_sim[i, s[i]], sd = sigma_i[i])
+}
+
+for (i in 1:n_sites) {
+  for (t in 2:n_seasons) {
+    l_a_sim[i, t - 1] <- exp(lz_sim[i, t] - lz_sim[i, t - 1]) 
+    l_p_sim[i, t - 1] <- exp(zr_sim[i])
+    if (w[i, t] == 1 & w[i, t - 1] == 1) {
+      lw_a_sim[i, t - 1] <- l_a_sim[i, t - 1] 
+      lw_p_sim[i, t - 1] <- l_p_sim[i, t - 1] 
+    } else {
+      lw_a_sim[i, t - 1] <- 1
+      lw_p_sim[i, t - 1] <- 1
+    }
+  }
+}
+
+for (i in 1:n_sites) {
+  gl_a_sim[i] <- prod(lw_a_sim[i, ])^(1/(sum(w[i, 1:n_seasons]) - 1))
+  gl_p_sim[i] <- prod(lw_p_sim[i, ])^(1/(sum(w[i, 1:n_seasons]) - 1))
+}
+
+# create the data list for the JAGS model
+model_sim <- list(
+  nests = nrow(abundance_nests),
+  y_n = y_n_sim, 
+  precision_n = abundance_nests$precision,
+  site_n = abundance_nests$site,
+  season_n = abundance_nests$season_relative,
+  chicks = nrow(abundance_chicks),
+  y_c = y_c_sim, 
+  precision_c = abundance_chicks$precision,
+  site_c = abundance_chicks$site,
+  season_c = abundance_chicks$season_relative,
+  y_i = y_i_sim,
+  precision_i = abundance_initial$precision,
+  n_sites = n_sites,
+  n_seasons = n_seasons,
+  # n_regions = n_regions,
+  # n_ccamlr = n_ccamlr,  
+  s = as.vector(SiteList$initial_season),
+  # region = as.vector(SiteList$region),
+  # ccamlr = as.vector(SiteList$ccamlr), 
+  w = w,
+  a = a,
+  b = b)
+
+save(model_sim, file = "_static/model_sim.rda")
+```
+
+
+## Model fitting
+
+```{r}
+random_inits <- function(model_data) {
+  seed = runif(1, 1, 100000)
+  gamma <- runif(1, -.025, .025)
+  # sigma_region <- runif(1, .05, .1)
+  sigma_site <- runif(1, .025, .05)
+  # sigma_season <- runif(1, .05, .1)
+  sigma <- runif(1, .05, .1)
+  chicks <- model_sim$chicks
+  n_sites <- model_sim$n_sites
+  n_seasons <- model_sim$n_seasons
+  # n_regions <- model_sim$n_regions
+  s <- model_sim$s
+  # region <- model_sim$region
+  # ccamlr <- model_sim$ccamlr
+  y_c <- model_sim$y_c
+  y_i <- model_sim$y_i
+  site_c <- model_sim$site_c
+  season_c <- model_sim$season_c
+  a <- model_sim$a
+  b <- model_sim$b
+  eta <- rnorm(n_sites, 0, sigma_site)
+  alpha <- rbeta(chicks, a, b)
+  nu <- runif(1, 1, 50)
+  zr <- NA ###
+  lz <- array(NA, dim = c(n_sites, n_seasons))
+  for (i in 1:n_sites) {
+    lz[i, s[i]] <- mean(y_i[i], na.rm = TRUE)
+    for (t in (s[i] + 1):n_seasons) {
+      zr[i] <- gamma + eta[i]
+      lz[i, t] <- LaplacesDemon::rst(1, lz[i, (t - 1)] + zr[i], sigma, nu)
+    }
+    for (t in 1:(s[i] - 1)) {
+      zr[i] <- gamma + eta[i]
+      lz[i, (s[i] - t)] <- LaplacesDemon::rst(1, lz[i, (s[i] - t + 1)] - zr[i], sigma, nu)
+     }
+  }
+
+  z_c <- N <- NA
+  for (i in 1:chicks) {
+    if (lz[site_c[i], season_c[i]] < 0) lz[site_c[i], season_c[i]] <- 0
+    N[i] <- 2 * round(exp(lz[site_c[i], season_c[i]]))
+    z_c[i] <- base::max(rbinom(1, prob = alpha[i], N[i]), 1)
+  }
+  
+  return(list(
+    sigma = sigma,
+    # sigma_region = sigma_region,
+    sigma_site = sigma_site,
+    # sigma_season = sigma_season,
+    gamma = gamma,
+    # beta = beta,
+    eta = eta,
+    nu = nu, ###
+    # epsilon = epsilon,
+    alpha = alpha,
+    lz = lz,
+    z_c = z_c,
+    .RNG.name = "base::Mersenne-Twister",
+    .RNG.seed = seed))
+}
+
+save(random_inits, file = "_static/random_inits.rda")
+expect_error(random_inits(model_sim), NA)
+```
+
+```{r, eval = FALSE, echo = TRUE}
+n.chains <- 6
+n.adapt <- 3000
+n.update <- 200000
+n.iter <- 100000
+thin <- 100
+cl <- makeCluster(n.chains)
+cvars <- c("model_sim", "n.adapt", "n.update", "n.iter", "thin", "params", "random_inits")
+params <- c("gamma", "sigma", "sigma_site", "alpha", "eta", "z_c", "lz", "gl_a", "l_a", "y_i_new",
+            "y_n_new", "y_c_new", "y_n_sqs", "y_n_sqs_new", 
+            "y_i_sqs_new", "y_i_sqs", "y_c_sqs", "y_c_sqs_new", "nu")
+parallel::clusterExport(cl, cvars)
+out <- clusterEvalQ(cl, {
+  library(rjags)
+  inits <- random_inits(model_sim)
+  jm = jags.model("_static/jags_model.jags", data = model_sim, n.chains = 1, n.adapt = n.adapt, 
+    inits = inits)
+  update(jm, n.iter = n.update)
+  zm = coda.samples(jm, variable.names = params, n.iter = n.iter, thin = thin)
+  return(as.mcmc(zm))
+})
+stopCluster(cl)
+model_sim_rinits_output = mcmc.list(out)  
+save(model_sim_rinits_output, file = "_static/model_sim_rinits_output.rda")
+```

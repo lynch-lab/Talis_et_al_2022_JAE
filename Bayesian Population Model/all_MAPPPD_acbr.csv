@@ -1,0 +1,735 @@
+site_id,site_name,ACBR_ID,ACBR_Name
+ACTI,Active Reef (Active Sound),3,North-west Antarctic Peninsula
+ACUN,Acuna Island,2,South Orkney Islands
+ADAM,Adams Island,7,East Antarctica
+AILS,Ailsa Craig,2,South Orkney Islands
+AITI,Aitcho Island Other,3,North-west Antarctic Peninsula
+AITK,Aitken Cove,2,South Orkney Islands
+AKAR,Akarui Point,5,Enderby Land
+ALAS,Alasheyev Bight,5,Enderby Land
+ALCO,Alcock Island,3,North-west Antarctic Peninsula
+AMAN,Amanda Bay,7,East Antarctica
+AMBU,Ambush Bay,3,North-west Antarctic Peninsula
+AMPH,Amphibolite Point,2,South Orkney Islands
+AMUN,Amundsen Bay,5,Enderby Land
+ANCH,Anchorage Island,3,North-west Antarctic Peninsula
+ANDS,Andersen Island,16,Prince Charles Mountains
+ANDR,Andresen Island Site 1,3,North-west Antarctic Peninsula
+ANDI,Andresen Island Site 2,3,North-west Antarctic Peninsula
+ANVS,Anvers Island South West (7 km south of Gerlache Island),3,North-west Antarctic Peninsula
+ARDL,Ardley Island,3,North-west Antarctic Peninsula
+ARMS,Armstrong Reef,3,North-west Antarctic Peninsula
+ARTH,Arthurson Ridge,13,Adelie Land
+ASPL,Aspland Island,3,North-west Antarctic Peninsula
+ASTD,Astrid,6,Dronning Maud Land
+ASTR,Astrolabe Island,3,North-west Antarctic Peninsula
+ATKA,Atka,6,Dronning Maud Land
+AUST,Auster Islands,16,Prince Charles Mountains
+AVIA,Avian Island,3,North-west Antarctic Peninsula
+BACH,Bach Quartet,3,North-west Antarctic Peninsula
+BACK,Backer Islands,14,Ellsworth Land
+BAIL,Baily Head (Deception Island),3,North-west Antarctic Peninsula
+BALA,Balaena Islands,7,East Antarctica
+BALD,Bald Head,1,North-east Antarctic Peninsula
+BARC,Barcroft Islands,3,North-west Antarctic Peninsula
+BARN,Barnard Point (Livingston Island),3,North-west Antarctic Peninsula
+AITC,Barrientos Island (Aitcho Islands),3,North-west Antarctic Peninsula
+BART,Barton Peninsula,3,North-west Antarctic Peninsula
+BEAG,Beagle Island,3,North-west Antarctic Peninsula
+BEAR,Bear Peninsula,12,Marie Byrd Land
+BEAU,Beaufort Island,9,South Victoria Land
+BEAN,Beaufort Island North,9,South Victoria Land
+BEAV,Beaver Rocks,3,North-west Antarctic Peninsula
+BECH,Bechervaise Island,16,Prince Charles Mountains
+BELI,Bell Island,3,North-west Antarctic Peninsula
+BELL,Bell Point,3,North-west Antarctic Peninsula
+BENE,Beneden Head,3,North-west Antarctic Peninsula
+BENT,Benten,5,Enderby Land
+BERK,Berkley/Cameron,7,East Antarctica
+BERN,Bernardo O'Higgins Station,3,North-west Antarctic Peninsula
+BERT,Berthelot Islands (excl. Green Island),3,North-west Antarctic Peninsula
+BISC,Biscoe Point,3,North-west Antarctic Peninsula
+BLAI,Blaiklock Island,3,North-west Antarctic Peninsula
+BLAK,Blake Island,3,North-west Antarctic Peninsula
+WHTY,Blakeney/Whitney,7,East Antarctica
+BOLI,Bolingen/Lichen Island,7,East Antarctica
+BONG,Bongrain Point (Pourquoi Pas Island),3,North-west Antarctic Peninsula
+BOUD,Boudet Island,3,North-west Antarctic Peninsula
+BOWM,Bowman Island,7,East Antarctica
+BOYE,Boyer Rocks,3,North-west Antarctic Peninsula
+BRAS,Brash Island,3,North-west Antarctic Peninsula
+BRAT,Brattstrand Bluff,7,East Antarctica
+BRIM,Brimstone Peak,3,North-west Antarctic Peninsula
+BRPW,Brimstone Peak (west),3,North-west Antarctic Peninsula
+BRIT,Brittannia's Figleaf,3,North-west Antarctic Peninsula
+BRIW,Brittannia's Figleaf West,3,North-west Antarctic Peninsula
+BROW,Brown Bluff,3,North-west Antarctic Peninsula
+BSON,Brownson Islands,14,Ellsworth Land
+ALMI,Brown Station,3,North-west Antarctic Peninsula
+BRUI,Bruce Island,3,North-west Antarctic Peninsula
+BRUC,Bruce Islands,2,South Orkney Islands
+BRYC,Bryde Island Cliffs,3,North-west Antarctic Peninsula
+BRYE,Bryde Island East,3,North-west Antarctic Peninsula
+BRYS,Bryde Island South,3,North-west Antarctic Peninsula
+BUCH,Buchanan Point,2,South Orkney Islands
+BUCK,Buckle Island,8,North Victoria Land
+BUSK,Buskin Rocks,3,North-west Antarctic Peninsula
+BYER,Byers Peninsula,3,North-west Antarctic Peninsula
+BYEW,Byewater Point,3,North-west Antarctic Peninsula
+BPTS,Byewater Point (south),3,North-west Antarctic Peninsula
+HILL,Camp Hill,1,North-east Antarctic Peninsula
+ADAR,Cape Adare,8,North Victoria Land
+ANDE,Cape Anderson,2,South Orkney Islands
+ANNE,Cape Anne,8,North Victoria Land
+ASTU,Cape Astrup,3,North-west Antarctic Peninsula
+CBAR,Cape Barne,9,South Victoria Land
+BATT,Cape Batterbee,5,Enderby Land
+BELS,Cape Belsham,3,North-west Antarctic Peninsula
+BENN,Cape Bennett,2,South Orkney Islands
+BIEN,Cape Bienvenue,13,Adelie Land
+BRDM,Cape Bird Middle,9,South Victoria Land
+BRDN,Cape Bird North,9,South Victoria Land
+BRDS,Cape Bird South,9,South Victoria Land
+BOWL,Cape Bowles,3,North-west Antarctic Peninsula
+BURD,Cape Burd,3,North-west Antarctic Peninsula
+BURK,Cape Burks,12,Marie Byrd Land
+CBEK,"Cape Colbeck, Edward VII Peninsula",12,Marie Byrd Land
+CONW,Cape Conway,3,North-west Antarctic Peninsula
+CCOE,Cape Conway (east),3,North-west Antarctic Peninsula
+CORN,Cape Cornish (NE Buckle),13,Adelie Land
+COTT,Cape Cotter,8,North Victoria Land
+CROZ,Cape Crozier,9,South Victoria Land
+DARN,Cape Darnley,16,Prince Charles Mountains
+CDAV,Cape Davis,8,North Victoria Land
+DENI,Cape Denison,13,Adelie Land
+EVEN,Cape Evensen (mainland),3,North-west Antarctic Peninsula
+EVER,Cape Evensen (offshore rocks),3,North-west Antarctic Peninsula
+GARY,Cape Garry,3,North-west Antarctic Peninsula
+GEDD,Cape Geddes,2,South Orkney Islands
+CHAL,Cape Hallett,8,North Victoria Land
+HANS,"Cape Hansen, Coronation Island",2,South Orkney Islands
+CHNE,Cape Herschel (northeast),3,North-west Antarctic Peninsula
+CHSE,Cape Herschel (southeast),3,North-west Antarctic Peninsula
+HINO,Cape Hinode,5,Enderby Land
+HOOK,Cape Hooker,3,North-west Antarctic Peninsula
+HORS,Cape Hooker Rock (south),3,North-west Antarctic Peninsula
+CHUN,Cape Hunter,13,Adelie Land
+JAME,Cape James,3,North-west Antarctic Peninsula
+JONE,Cape Jones,8,North Victoria Land
+JULE,Cape Jules,13,Adelie Land
+KATE,Cape Kater,3,North-west Antarctic Peninsula
+KJEL,Cape Kjellman,3,North-west Antarctic Peninsula
+LACH,Cape Lachman (James Ross Island),1,North-east Antarctic Peninsula
+LAUR,Cape Laure,3,North-west Antarctic Peninsula
+LEGU,Cape Leguillou,3,North-west Antarctic Peninsula
+CLIN,Cape Lindsey,3,North-west Antarctic Peninsula
+LLOY,Cape Lloyd,3,North-west Antarctic Peninsula
+LOOK,Cape Lookout,3,North-west Antarctic Peninsula
+CMEL,Cape Melville,3,North-west Antarctic Peninsula
+MONA,Cape Monaco,3,North-west Antarctic Peninsula
+CMUR,Cape Murray,3,North-west Antarctic Peninsula
+NUTT,Cape Nutt,7,East Antarctica
+OMGA,Cape Omega,5,Enderby Land
+PHIL,Cape Phillips,8,North Victoria Land
+PIGE,Cape Pigeon Rocks,13,Adelie Land
+CROB,Cape Robertson,2,South Orkney Islands
+ROCA,Cape Roca,2,South Orkney Islands
+ROGE,Cape Roget,8,North Victoria Land
+ROQU,Cape Roquemaurel,3,North-west Antarctic Peninsula
+ROYD,Cape Royds,9,South Victoria Land
+SHIR,Cape Shirreff,3,North-west Antarctic Peninsula
+SMIT,Cape Smith,3,North-west Antarctic Peninsula
+TUXE,Cape Tuxen,3,North-west Antarctic Peninsula
+VALE,Cape Valentine,3,North-west Antarctic Peninsula
+CVIK,Cape Vik,2,South Orkney Islands
+WAIT,Cape Waites,14,Ellsworth Land
+WALL,Cape Wallace,3,North-west Antarctic Peninsula
+WABL,Cape Wallace Bluff (south),3,North-west Antarctic Peninsula
+WASH,Cape Washington,8,North Victoria Land
+WHEA,Cape Wheatstone,8,North Victoria Land
+WHIT,Cape Whitson,2,South Orkney Islands
+CARL,Carlota Cove,3,North-west Antarctic Peninsula
+CARO,Caroline Bluff,3,North-west Antarctic Peninsula
+CBAY,Casey Bay,5,Enderby Land
+CAST,Castle Rock,3,North-west Antarctic Peninsula
+CASY,Casy Island,3,North-west Antarctic Peninsula
+CECI,Cecilia Island,3,North-west Antarctic Peninsula
+CHAB,"Chabrier Rock, Vaureal Peak",3,North-west Antarctic Peninsula
+CHAP,Chappel Island,7,East Antarctica
+CHAR,Charcot Island,4,Central south Antarctic Peninsula
+CHPT,Charles Point,3,North-west Antarctic Peninsula
+CHAT,Chatos Island,3,North-west Antarctic Peninsula
+CHEA,Cheal Point,2,South Orkney Islands
+CHIC,Chick Islands,7,East Antarctica
+CHI1,Child Rocks Islands 1,16,Prince Charles Mountains
+CHI2,Child Rocks Islands 2,16,Prince Charles Mountains
+CHI3,Child Rocks Islands 3,16,Prince Charles Mountains
+CCMP,Chinstrap Camp,3,North-west Antarctic Peninsula
+CHIN,Chinstrap Cove,3,North-west Antarctic Peninsula
+CHII,Chinstrap Islet,8,North Victoria Land
+CHIS,Christine Island,3,North-west Antarctic Peninsula
+CHRI,Christoffersen Island,2,South Orkney Islands
+CIER,Cierva Point,3,North-west Antarctic Peninsula
+CIPT,Cieslak Point,3,North-west Antarctic Peninsula
+CPTW,Cieslak Point (west),3,North-west Antarctic Peninsula
+CLAR,Clark Island,14,Ellsworth Land
+CLPT,Claude Point,3,North-west Antarctic Peninsula
+COBA,Cobalescou Island,3,North-west Antarctic Peninsula
+COCK,Cockburn Island,3,North-west Antarctic Peninsula
+COFF,Coffer Island,2,South Orkney Islands
+COLB,Colbeck Archipelago Unnamed 1,16,Prince Charles Mountains
+CONC,Conception Point,2,South Orkney Islands
+CONE,Cone Island,3,North-west Antarctic Peninsula
+CONF,Confusion Island,2,South Orkney Islands
+CONI,Conical Island (Aviation Islands),13,Adelie Land
+CONT,Continental Rock,5,Enderby Land
+CORM,Cormorant Island,3,North-west Antarctic Peninsula
+CORP,Cormorant Point,2,South Orkney Islands
+CRWL,Cornwallis Island,3,North-west Antarctic Peninsula
+CORI,Cornwall Island,3,North-west Antarctic Peninsula
+CIOL,Coronation Island (other localities),2,South Orkney Islands
+COUL,Coulman Island,8,North Victoria Land
+CMID,Coulman Middle,8,North Victoria Land
+CNOR,Coulman North,8,North Victoria Land
+CSOU,Coulman South,8,North Victoria Land
+CRAB,Crab Beach,3,North-west Antarctic Peninsula
+CRBA,Cresta Run Bay,3,North-west Antarctic Peninsula
+CROW,Crown Head,2,South Orkney Islands
+CHEC,Crown Head (east coast),2,South Orkney Islands
+CRUZ,Cruzen Island,12,Marie Byrd Land
+CRYS,Crystal Hill,1,North-east Antarctic Peninsula
+CURZ,Curzon Islands,13,Adelie Land
+CUVE,Cuverville Island,3,North-west Antarctic Peninsula
+DANC,Danco Island,3,North-west Antarctic Peninsula
+DARB,Darbel Island,3,North-west Antarctic Peninsula
+DARX,Darboux Island,3,North-west Antarctic Peninsula
+DARW,Darwin Island,3,North-west Antarctic Peninsula
+DAVE,Davey Point,3,North-west Antarctic Peninsula
+DBAY,Davis Bay,13,Adelie Land
+DAVI,Davis Island,7,East Antarctica
+DAWS,Dawson,10,Transantarctic Mountains
+DECI,Decimal Point,3,North-west Antarctic Peninsula
+DEEI,Dee Island,3,North-west Antarctic Peninsula
+DELA,Delaite Island,3,North-west Antarctic Peninsula
+DEMS,Demas Rocks,3,North-west Antarctic Peninsula
+DEMA,Demay Point,3,North-west Antarctic Peninsula
+DESC,Descazes Island,3,North-west Antarctic Peninsula
+DESO,Desolation Island,3,North-west Antarctic Peninsula
+DETA,Detaille Island,3,North-west Antarctic Peninsula
+DEVI,Devil Island,3,North-west Antarctic Peninsula
+DEPT,Devils Point,3,North-west Antarctic Peninsula
+DIBB,Dibble Glacier,13,Adelie Land
+DOLL,Dolleman,4,Central south Antarctic Peninsula
+DOME,Dome Island (Aviation Islands),13,Adelie Land
+DAMO,Dorian Bay/Damoy Point,3,North-west Antarctic Peninsula
+DOBE,Dorian Beacon,3,North-west Antarctic Peninsula
+DOU1,Douglas Islands 1,16,Prince Charles Mountains
+DOU2,Douglas Islands 2,16,Prince Charles Mountains
+DOWN,Downshire Cliffs,8,North Victoria Land
+DREA,Dream Island,3,North-west Antarctic Peninsula
+DREW,Dream Island West (Casey Islands),3,North-west Antarctic Peninsula
+DRES,Drescher,6,Dronning Maud Land
+DUFF,Duff Point (Greenwich Island),3,North-west Antarctic Peninsula
+DUKE,Duke of York Island,8,North Victoria Land
+DUND,Dundee Island,3,North-west Antarctic Peninsula
+DURO,Duroch Islands,3,North-west Antarctic Peninsula
+DURV,d'Urville Monument,3,North-west Antarctic Peninsula
+DUPT,Duthiers Point,3,North-west Antarctic Peninsula
+DUTH,Duthoit Point,3,North-west Antarctic Peninsula
+EADI,Eadie Island,3,North-west Antarctic Peninsula
+EAGL,Eagle Island,3,North-west Antarctic Peninsula
+EARL,Earle Island,3,North-west Antarctic Peninsula
+EGAR,East 2-3 km of Cape Garry,3,North-west Antarctic Peninsula
+ECAP,East Cape,2,South Orkney Islands
+EMEI,East of Meier Point,2,South Orkney Islands
+ECKE,Eckener Point,3,North-west Antarctic Peninsula
+EDEN,Eden Rocks,3,North-west Antarctic Peninsula
+EDMO,Edmonson Point,8,North Victoria Land
+EDWI,Edwards Islands,14,Ellsworth Land
+EDWA,Edwards Point,3,North-west Antarctic Peninsula
+EIP0,Elephant Island (north coast point 0),3,North-west Antarctic Peninsula
+EIP1,Elephant Island (north coast point 1),3,North-west Antarctic Peninsula
+EIP2,Elephant Island (north coast point 2),3,North-west Antarctic Peninsula
+EIP3,Elephant Island (north coast point 3),3,North-west Antarctic Peninsula
+EIP4,Elephant Island (north coast point 4),3,North-west Antarctic Peninsula
+EIP5,Elephant Island (north coast point 5),3,North-west Antarctic Peninsula
+ELPT,Elephant Point,3,North-west Antarctic Peninsula
+ELLI,Ellium Island,2,South Orkney Islands
+EMER,Emerald Cove,3,North-west Antarctic Peninsula
+EMPE,Emperor Island,3,North-west Antarctic Peninsula
+ENTE,Enterprise Island,3,North-west Antarctic Peninsula
+ENTR,Entrance Point,3,North-west Antarctic Peninsula
+ENTW,Entrance Point West,3,North-west Antarctic Peninsula
+ETNA,Etna Island,3,North-west Antarctic Peninsula
+EXTE,Extension Reef,3,North-west Antarctic Peninsula
+EYRI,Eyrie Bay,1,North-east Antarctic Peninsula
+FALS,False Island Point (Vega Island),3,North-west Antarctic Peninsula
+FARI,False Ridge,3,North-west Antarctic Peninsula
+FRPT,False Round Point,3,North-west Antarctic Peninsula
+FARE,Farewell Rock,3,North-west Antarctic Peninsula
+FERG,Ferguslie Peninsula,2,South Orkney Islands
+FERR,Ferrier Peninsula,2,South Orkney Islands
+FILD,Fildes Peninsula (northwest side),3,North-west Antarctic Peninsula
+FISH,Fish Islands,3,North-west Antarctic Peninsula
+FITC,Fitchie Bay,2,South Orkney Islands
+FIZK,Fizkin Island (islet northeast of Fizkin Island),3,North-west Antarctic Peninsula
+FLIE,Fliess Bay,3,North-west Antarctic Peninsula
+FLOR,Florence Rock,2,South Orkney Islands
+FOLD,Fold Island,5,Enderby Land
+FORB,Forbes Glacier,16,Prince Charles Mountains
+FBER,Fortenberry,8,North Victoria Land
+FORT,Fort Point (Greenwich Island),3,North-west Antarctic Peninsula
+FOYN,Foyn Harbor (Enterprise Island),3,North-west Antarctic Peninsula
+FRAM,Fram Islands,13,Adelie Land
+FRNC,Francais Rocks,3,North-west Antarctic Peninsula
+FRAN,Franklin Island,9,South Victoria Land
+FRAE,Franklin Island East,9,South Victoria Land
+FRAW,Franklin Island West,9,South Victoria Land
+FRED,Fredriksen Island,2,South Orkney Islands
+FURS,Fur Seal Point,3,North-west Antarctic Peninsula
+FYRC,Fyr Channel,2,South Orkney Islands
+GALE,Galindez Island East,3,North-west Antarctic Peninsula
+GALS,Galindez Island South,3,North-west Antarctic Peninsula
+GAMP,Gam Point Area,3,North-west Antarctic Peninsula
+GAST,Gaston Islands,3,North-west Antarctic Peninsula
+GEOR,Georges Point (Ronge Island),3,North-west Antarctic Peninsula
+GRIB,Georges Rib,3,North-west Antarctic Peninsula
+GERD,Gerd Island,2,South Orkney Islands
+GERL,Gerlache Island,3,North-west Antarctic Peninsula
+GNEY,Gibbney Island,16,Prince Charles Mountains
+GIBA,Gibbon Bay,2,South Orkney Islands
+GIBB,Gibbs Island,3,North-west Antarctic Peninsula
+GIBS,Gibson Bay,1,North-east Antarctic Peninsula
+GING,Ginger Island,3,North-west Antarctic Peninsula
+GLAN,Glandaz Point,3,North-west Antarctic Peninsula
+GOLF,Golfcourse Point,3,North-west Antarctic Peninsula
+GOSL,Gosling Islands,2,South Orkney Islands
+GOWC,Gosling Islands (west coast),2,South Orkney Islands
+GOUL,Gould,10,Transantarctic Mountains
+GOUR,Gourdin Island,3,North-west Antarctic Peninsula
+GOPT,Gourlay Point,2,South Orkney Islands
+GRAP,Graptolite Island,2,South Orkney Islands
+GREI,Green Island,3,North-west Antarctic Peninsula
+GREY,Grey Island,2,South Orkney Islands
+GRIN,Grinder Rock,3,North-west Antarctic Peninsula
+GUNN,Gunnerus,5,Enderby Land
+HALF,Half Moon Island,3,North-west Antarctic Peninsula
+HALY,Halley,10,Transantarctic Mountains
+HPNE,Hall Peninsula (northeast),3,North-west Antarctic Peninsula
+HPSW,Hall Peninsula (southwest),3,North-west Antarctic Peninsula
+HANN,Hannah Point,3,North-west Antarctic Peninsula
+HBAY,Harald Bay,13,Adelie Land
+HARM,Harmony Point,3,North-west Antarctic Peninsula
+HARE,Harmony Point (east),3,North-west Antarctic Peninsula
+HASW,Haswell Island,7,East Antarctica
+HENN,Hennequin Point,3,North-west Antarctic Peninsula
+HENR,Henry Islands,7,East Antarctica
+HERO,Heroina Island,3,North-west Antarctic Peninsula
+HEYW,Heywood Island,3,North-west Antarctic Peninsula
+HIDD,Hidden Bay,3,North-west Antarctic Peninsula
+HOKU,Hokuro Cove,5,Enderby Land
+HOLD,Holdfast Point (mainland and offshore rocks),3,North-west Antarctic Peninsula
+MIDG,Hollin/Midgley,7,East Antarctica
+HOLL,Holl/O'Connor,7,East Antarctica
+HOPE,Hope Bay,1,North-east Antarctic Peninsula
+HORI,Horseshoe Island,3,North-west Antarctic Peninsula
+HOVG,Hovgaard Island,3,North-west Antarctic Peninsula
+HUMB,Humble Island,3,North-west Antarctic Peninsula
+HUMP,Humphries Heights,3,North-west Antarctic Peninsula
+HUNT,Hunt Island,3,North-west Antarctic Peninsula
+HURE,Hurd Peninsula (east),3,North-west Antarctic Peninsula
+HURW,Hurd Peninsula (west),3,North-west Antarctic Peninsula
+HUTB,Hut Bluff,3,North-west Antarctic Peninsula
+HYDR,Hydrurga Rocks,3,North-west Antarctic Peninsula
+IFOI,Ifo Island Area,13,Adelie Land
+INAC,Inaccessible Island,2,South Orkney Islands
+INEX,Inexpressible Island,8,North Victoria Land
+INTE,Intercurrence Island,3,North-west Antarctic Peninsula
+SGUE,Island south of Guesalaga Island,3,North-west Antarctic Peninsula
+IOLB,Isles of Litwin Bay,3,North-west Antarctic Peninsula
+LAVO,Islet 1 km west of Lavosier Island,3,North-west Antarctic Peninsula
+LAKT,Islet next to Laktionov Island,3,North-west Antarctic Peninsula
+LEPP,Islet south of Le Petit Prince,3,North-west Antarctic Peninsula
+IVAN,Ivanhoff Head,7,East Antarctica
+JACO,Jacobs Ladder,3,North-west Antarctic Peninsula
+JACP,Jacques Peak,3,North-west Antarctic Peninsula
+JADE,Jade Point,1,North-east Antarctic Peninsula
+JPTI,Jameson Point Islands,3,North-west Antarctic Peninsula
+JPTS,Jameson Point (south),3,North-west Antarctic Peninsula
+JPTV,Jameson Point (vicinity),3,North-west Antarctic Peninsula
+JANE,Janet Rock,13,Adelie Land
+JAQU,Jaquinot Rocks,1,North-east Antarctic Peninsula
+JENN,Jenny Island,3,North-west Antarctic Peninsula
+JESS,Jessie Bay,2,South Orkney Islands
+JING,Jingle Island,3,North-west Antarctic Peninsula
+JOHN,Johnson's Dock,3,North-west Antarctic Peninsula
+JONA,Jonassen Island,3,North-west Antarctic Peninsula
+JORG,Jorge Island,3,North-west Antarctic Peninsula
+JOUB,Joubin Islands,3,North-west Antarctic Peninsula
+JOUG,Jougla Point,3,North-west Antarctic Peninsula
+JUAN,Juan Carlos I Station,3,North-west Antarctic Peninsula
+KAYR,Kay Rock,3,North-west Antarctic Peninsula
+KELL,Kellick Island,3,North-west Antarctic Peninsula
+KETL,Ketley Point,3,North-west Antarctic Peninsula
+KIDS,Kidson Island,16,Prince Charles Mountains
+KING,King Point,1,North-east Antarctic Peninsula
+KIRB,Kirby Head,5,Enderby Land
+KIRT,Kirton/Macklin,16,Prince Charles Mountains
+KITC,Kitchen Point,3,North-west Antarctic Peninsula
+KLOA,Kloa Point,5,Enderby Land
+KNOB,"Knobble Head, Bransfield Island",3,North-west Antarctic Peninsula
+KOPA,Kopaitic Island,3,North-west Antarctic Peninsula
+KROG,Krogh Island (Islet North of NE coast of K.I.),3,North-west Antarctic Peninsula
+KUNO,Kuno Point,3,North-west Antarctic Peninsula
+KUZI,Kuzira Point,5,Enderby Land
+LAAG,Laager Point,3,North-west Antarctic Peninsula
+LAFA,Lafarge Rocks,3,North-west Antarctic Peninsula
+LAGO,Lagotellerie Island,3,North-west Antarctic Peninsula
+LAIN,Lainez Point,3,North-west Antarctic Peninsula
+LAIR,Lair Point,3,North-west Antarctic Peninsula
+LAJA,Lajarte Island,3,North-west Antarctic Peninsula
+LARS,Larsen Island,2,South Orkney Islands
+LAUF,Lauff Island,12,Marie Byrd Land
+LAUT,Lautaro Neck,3,North-west Antarctic Peninsula
+LAZA,Lazarev,6,Dronning Maud Land
+LECO,Lecointe Island,3,North-west Antarctic Peninsula
+LEDD,Ledda Bay,12,Marie Byrd Land
+LEWI,Lewis Island,13,Adelie Land
+LIND,Lindblad Cove,3,North-west Antarctic Peninsula
+LSAY,Lindsay Islands,14,Ellsworth Land
+LION,Lions Rump,3,North-west Antarctic Peninsula
+LITC,Litchfield Island,3,North-west Antarctic Peninsula
+LITW,Litwin Bay (southwest of Davey Point),3,North-west Antarctic Peninsula
+LLAN,Llano Point,3,North-west Antarctic Peninsula
+LOBO,Lobodon Island,3,North-west Antarctic Peninsula
+LONG,Long Peninsula Island,7,East Antarctica
+LOUB,Loubat Point,3,North-west Antarctic Peninsula
+LOVI,Lovill Bluff,12,Marie Byrd Land
+LOWT,Low Tongue,16,Prince Charles Mountains
+LUIT,Luitpold,10,Transantarctic Mountains
+MABE,Mabel Island,2,South Orkney Islands
+MPTE,Macaroni Point (east),3,North-west Antarctic Peninsula
+MPTW,Macaroni Point (west),3,North-west Antarctic Peninsula
+MACK,MacKellar Islands,13,Adelie Land
+MACO,Mackintosh Cove (east coast),2,South Orkney Islands
+MADI,Madder Cliff Island,1,North-east Antarctic Peninsula
+MADD,Madder Cliff (Joinville Island),1,North-east Antarctic Peninsula
+MAHE,Maher Island,12,Marie Byrd Land
+MALL,Mallory Point,7,East Antarctica
+MAME,Mame-zima,5,Enderby Land
+MAND,Mandible Cirque,8,North Victoria Land
+MANS,Mansfield Point,2,South Orkney Islands
+MARA,Marambio Station Vicinity,1,North-east Antarctic Peninsula
+MARI,Mariholm,2,South Orkney Islands
+MARR,Marr Bay (east coast),2,South Orkney Islands
+MATH,Matthews Island,2,South Orkney Islands
+MAWS,Mawson Coast (excl. Bechervaise Island),16,Prince Charles Mountains
+MCAL,McCall Point,3,North-west Antarctic Peninsula
+MCDO,McDonald Point,5,Enderby Land
+MLGE,McLeod Glacier (east),2,South Orkney Islands
+MLGW,McLeod Glacier (west),2,South Orkney Islands
+MEDL,Medley Rocks,3,North-west Antarctic Peninsula
+MEGA,Megaptera Island,3,North-west Antarctic Peninsula
+MEHO,Meholmen Island,5,Enderby Land
+MEIE,Meier Point,2,South Orkney Islands
+MELC,Melchior Islands,3,North-west Antarctic Peninsula
+MERR,Merritt Island,7,East Antarctica
+MERT,Mertz Glacier,13,Adelie Land
+METC,Metchnikoff Point,3,North-west Antarctic Peninsula
+METH,Methuen Cove,2,South Orkney Islands
+MICH,Michelsen Island,2,South Orkney Islands
+MIDA,Midas Island,3,North-west Antarctic Peninsula
+MIER,Miers Bluff,3,North-west Antarctic Peninsula
+MBNE,Miers Bluff Cove (northeast),3,North-west Antarctic Peninsula
+MBNW,Miers Bluff (northwest),3,North-west Antarctic Peninsula
+MIKK,Mikkelsen Harbor (Trinity Island),3,North-west Antarctic Peninsula
+MITC,Mitchell Cove (Robert Island),3,North-west Antarctic Peninsula
+MIZU,Mizukuguri Cove,5,Enderby Land
+MOEI,Moe Island,2,South Orkney Islands
+MOLI,Molina Point (northeast tip of Lemaire Island),3,North-west Antarctic Peninsula
+MONR,Monroe Island,2,South Orkney Islands
+MOPT,Monroe Point,3,North-west Antarctic Peninsula
+MONU,Monument Rocks,3,North-west Antarctic Peninsula
+MOOT,Moot Point,3,North-west Antarctic Peninsula
+MORE,Moreton Point,2,South Orkney Islands
+MPNC,Moreton Point North Coast,2,South Orkney Islands
+MBIS,Mount Biscoe,5,Enderby Land
+MGLE,Mount Gleadell,5,Enderby Land
+MRII,Mount Riiser-Larsen,5,Enderby Land
+MOYE,Moyes,2,South Orkney Islands
+MUCK,Muckle Bluff,3,North-west Antarctic Peninsula
+MURR,Murray Islands,2,South Orkney Islands
+MYAL,Myall/McMahon,5,Enderby Land
+NANC,Nancy Rock,3,North-west Antarctic Peninsula
+CRAG,Near Craggy Point (Sugarloaf Island),3,North-west Antarctic Peninsula
+RNVG,Near Ranvik Glacier,7,East Antarctica
+NEKO,Neko Harbor (Andvord Bay),3,North-west Antarctic Peninsula
+NELL,Nella/Thalla Islands,8,North Victoria Land
+NEIS,Nelly Island,7,East Antarctica
+NEPT,Nelly Point,3,North-west Antarctic Peninsula
+NEWE,Newell Point,3,North-west Antarctic Peninsula
+NIGG,Nigg Rock,2,South Orkney Islands
+NOBL,Noble Rocks,3,North-west Antarctic Peninsula
+NOKK,Nokkelholmane Islands,5,Enderby Land
+NCAP,North Cape (d'Urville Island),3,North-west Antarctic Peninsula
+NESM,Northeast of Smiggers Island,3,North-west Antarctic Peninsula
+NORF,Northern Foothills (Terra Nova Bay),8,North Victoria Land
+NFOR,North Foreland,3,North-west Antarctic Peninsula
+NCOI,North of Cornwall Island,3,North-west Antarctic Peninsula
+NHAM,North of Hammer Point,3,North-west Antarctic Peninsula
+HEYN,North of Heywood Island,3,North-west Antarctic Peninsula
+NMED,North of Medley Rocks,3,North-west Antarctic Peninsula
+NTAY,North of Taylor Point,3,North-west Antarctic Peninsula
+NOPT,North Point,2,South Orkney Islands
+NVEG,North Vega Island,3,North-west Antarctic Peninsula
+NWPO,Northwest coast of Pomona Plateau,2,South Orkney Islands
+NWSP,Northwest of Spert Island,3,North-west Antarctic Peninsula
+NORW,Norway Bight,2,South Orkney Islands
+NOVI,Noville Peninsula,14,Ellsworth Land
+OBRI,O'Brien Island,3,North-west Antarctic Peninsula
+ODBE,Odbert Island,7,East Antarctica
+ORCW,Offshore Rocks off Cape Wallace,3,North-west Antarctic Peninsula
+OLDH,Oldham Island,16,Prince Charles Mountains
+OLIC,Oliphant Channel,2,South Orkney Islands
+OLII,Oliphant Islands,2,South Orkney Islands
+ONEI,O'Neill Point,3,North-west Antarctic Peninsula
+ONGU,Ongulkaven,5,Enderby Land
+ORNE,Orne Islands,3,North-west Antarctic Peninsula
+ORRO,Ornen Rocks,3,North-west Antarctic Peninsula
+OUTE,Outer Island,2,South Orkney Islands
+OWEN,Owen Island,3,North-west Antarctic Peninsula
+PAGE,Pageant Point,2,South Orkney Islands
+PALA,Palaver Point,3,North-west Antarctic Peninsula
+PAND,Pandemonium Point,2,South Orkney Islands
+PANT,Pantomime Point,2,South Orkney Islands
+PABE,Paradise Harbor Beacon (Paradise Bay),3,North-west Antarctic Peninsula
+PATE,Patella Island,3,North-west Antarctic Peninsula
+PAPT,Patelnia Point,3,North-west Antarctic Peninsula
+PAUL,Paulet Island,3,North-west Antarctic Peninsula
+PEIN,Peine Island (Comb Island),3,North-west Antarctic Peninsula
+PENG,Penguin Island,3,North-west Antarctic Peninsula
+PLDR,Penguin Ladder,3,North-west Antarctic Peninsula
+PEPO,Penguin Point (Seymour Island),1,North-east Antarctic Peninsula
+PERS,Persson Island,3,North-west Antarctic Peninsula
+PIIS,Peter I Island,14,Ellsworth Land
+PETE,Petermann Island,3,North-west Antarctic Peninsula
+PSON,Peterson Bank,7,East Antarctica
+PISL,Peterson Island,7,East Antarctica
+PKUP,Pickup Point,3,North-west Antarctic Peninsula
+PILL,Pillar Ridge,3,North-west Antarctic Peninsula
+PING,Pinguino Island,3,North-west Antarctic Peninsula
+PPPT,Pink Pool Point,3,North-west Antarctic Peninsula
+PIRI,Pirie Peninsula,2,South Orkney Islands
+PLAT,Plato Island (Platter Island),3,North-west Antarctic Peninsula
+PLEN,Pleneau Island,3,North-west Antarctic Peninsula
+PGEO,Point Geologie,13,Adelie Land
+MART,Point Martin,2,South Orkney Islands
+OBEL,Point Obelisk (James Ross Inland),1,North-east Antarctic Peninsula
+PRAE,Point Rae,2,South Orkney Islands
+PTHO,Point Thomas,3,North-west Antarctic Peninsula
+WILD,Point Wild,3,North-west Antarctic Peninsula
+PTWD,Point Wordie,3,North-west Antarctic Peninsula
+POMO,Pomona Plateau Northwest coast,2,South Orkney Islands
+POPT,Portal Point,3,North-west Antarctic Peninsula
+PCHA,Port Charcot,3,North-west Antarctic Peninsula
+PORT,Porteous Point,2,South Orkney Islands
+LOCK,Port Lockroy,3,North-west Antarctic Peninsula
+PMAR,Port Martin,13,Adelie Land
+POSS,Possession Island,8,North Victoria Land
+POPO,Pottinger Point,3,North-west Antarctic Peninsula
+POWE,Powell Island,2,South Orkney Islands
+PRES,President Head (Snow Island),3,North-west Antarctic Peninsula
+PRIE,Priest Island (Peltier Channel),3,North-west Antarctic Peninsula
+PRIM,Prime Head,3,North-west Antarctic Peninsula
+PRIN,Principal Point,3,North-west Antarctic Peninsula
+PROC,Proclamation Island,5,Enderby Land
+NPRO,Promontories on north-central coast,3,North-west Antarctic Peninsula
+PROS,Prospect Point,3,North-west Antarctic Peninsula
+PURD,Purdy Point,2,South Orkney Islands
+PYPT,Py Point,3,North-west Antarctic Peninsula
+PYRI,Pyrites Island,3,North-west Antarctic Peninsula
+QPTM,Quinton Point (middle),3,North-west Antarctic Peninsula
+QPTN,Quinton Point (north),3,North-west Antarctic Peninsula
+QPTS,Quinton Point (south),3,North-west Antarctic Peninsula
+RAGN,Ragnhild,6,Dronning Maud Land
+RAUE,Rauer Islands,7,East Antarctica
+RAYN,Rayner Point,2,South Orkney Islands
+REDI,Red Island,1,North-east Antarctic Peninsula
+RRRI,Red Rock Ridge,3,North-west Antarctic Peninsula
+RENI,Renier Point,3,North-west Antarctic Peninsula
+RETU,Return Point,2,South Orkney Islands
+RHYO,Rhyolite Island,4,Central south Antarctic Peninsula
+RIDL,Ridley Island,3,North-west Antarctic Peninsula
+RIIS,Riiser,6,Dronning Maud Land
+RIPP,Rip Point,3,North-west Antarctic Peninsula
+ROBB,Robbery Beaches,3,North-west Antarctic Peninsula
+ROBE,Robert Point (Robert Island),3,North-west Antarctic Peninsula
+RBSN,Robinson,16,Prince Charles Mountains
+RONW,Robinson (northwest),16,Prince Charles Mountains
+ROSE,Robinson (southeast),16,Prince Charles Mountains
+RAND,Rocks near Andersson Island,3,North-west Antarctic Peninsula
+ROME,Romeo Island,3,North-west Antarctic Peninsula
+RONE,Ronge Island East,3,North-west Antarctic Peninsula
+ROOK,Rookery Islands,16,Prince Charles Mountains
+ROWE,Rowett Island,3,North-west Antarctic Peninsula
+RUDM,Rudmose Rocks,2,South Orkney Islands
+RUGG,Rugged Rocks,3,North-west Antarctic Peninsula
+RUMP,Rumpa Island,5,Enderby Land
+RUPE,Rupert Coast,12,Marie Byrd Land
+RZEP,Rzepeki Islands,3,North-west Antarctic Peninsula
+SABR,Sabrina Island,8,North Victoria Land
+SAPT,Saddleback Point,3,North-west Antarctic Peninsula
+SADD,Saddle Island,2,South Orkney Islands
+SANA,Sanae,6,Dronning Maud Land
+SAND,Sandefjord Bay,2,South Orkney Islands
+SANE,San Eliado Point,3,North-west Antarctic Peninsula
+SART,Sartorius Point,3,North-west Antarctic Peninsula
+SAXU,Saxum Nunatak,3,North-west Antarctic Peninsula
+SCUL,Scullin/Murray,16,Prince Charles Mountains
+SEAL,Seal Islands,3,North-west Antarctic Peninsula
+SEFB,SE Fisher Bay,13,Adelie Land
+SELV,Selvick Cove,3,North-west Antarctic Peninsula
+SENT,Sentry Rocks,8,North Victoria Land
+SEPR,SE Promontory,13,Adelie Land
+SERA,Serac Point,3,North-west Antarctic Peninsula
+SHAC,Shackleton Ice Shelf,7,East Antarctica
+SHIS,Shag Island,3,North-west Antarctic Peninsula
+SHAG,Shagnasty Island,2,South Orkney Islands
+SHEE,Sheelagh Islands,5,Enderby Land
+SHEI,Shepard Island,12,Marie Byrd Land
+SHEN,Sheppard Nunatak,3,North-west Antarctic Peninsula
+SHEP,Sheppard Point,3,North-west Antarctic Peninsula
+SHIL,Shilling Shelf,3,North-west Antarctic Peninsula
+SHIN,Shingle Cove (Coronation Island),2,South Orkney Islands
+SHLY,Shirley/Beall,7,East Antarctica
+SHUM,Shumskiy Cove,3,North-west Antarctic Peninsula
+SIFF,Siffrey Point,3,North-west Antarctic Peninsula
+SIGA,Sigaren,5,Enderby Land
+SIMS,Sims Island,15,South Antarctic Peninsula
+SKIL,Skilling Island (north coast),2,South Orkney Islands
+SKOT,Skottsberg Point,3,North-west Antarctic Peninsula
+SMAL,Small Island,3,North-west Antarctic Peninsula
+SEGI,Small island southeast on Gerlache Island,3,North-west Antarctic Peninsula
+SMIG,Smiggers Island,3,North-west Antarctic Peninsula
+SMTH,Smith,15,South Antarctic Peninsula
+SMYL,Smyley,15,South Antarctic Peninsula
+SNOW,Snow Hill Island,3,North-west Antarctic Peninsula
+SOMI,South of Martin Islands,3,North-west Antarctic Peninsula
+SOTH,South of Tay Head,1,North-east Antarctic Peninsula
+SPBL,South Point Bluff,3,North-west Antarctic Peninsula
+SPNW,South Point Bluff (northwest),3,North-west Antarctic Peninsula
+SWIS,Southwest Island (Aviation Islands),13,Adelie Land
+SPUI,Spence Harbour and unnamed island,2,South Orkney Islands
+SPER,Spert Island,3,North-west Antarctic Peninsula
+SPIG,Spigot Peak,3,North-west Antarctic Peninsula
+SPIP,Spigot Peak Point,3,North-west Antarctic Peninsula
+SPTR,Spigot Peak Tripod,3,North-west Antarctic Peninsula
+SPRO,Spindrift Rocks,2,South Orkney Islands
+SPIN,Spine Island (Coronation Island),2,South Orkney Islands
+SPLI,Split Beach,3,North-west Antarctic Peninsula
+SPRI,Sprightly Islands Vicinity,3,North-west Antarctic Peninsula
+STAC,Stackpole Rocks,3,North-west Antarctic Peninsula
+STCB,Stancomb,6,Dronning Maud Land
+STAN,Stanton Continental Rock,16,Prince Charles Mountains
+STUN,Stanton unnamed,16,Prince Charles Mountains
+STEE,Steepholm Islands,2,South Orkney Islands
+STEI,Steines Island,7,East Antarctica
+STEN,Stene Point,2,South Orkney Islands
+STER,Sterneck Island,3,North-west Antarctic Peninsula
+STIG,Stigant Point,3,North-west Antarctic Peninsula
+STOK,Stoker Island,3,North-west Antarctic Peninsula
+STON,Stonington Island,3,North-west Antarctic Peninsula
+STRA,Stranger Point,3,North-west Antarctic Peninsula
+STUR,Sturge Island,8,North Victoria Land
+SVEN,Sven Foyn Island,8,North Victoria Land
+SVIS,Svenner Islands,7,East Antarctica
+TART,Tartar Point,3,North-west Antarctic Peninsula
+TAYH,Tay Head (Joinville Island),3,North-west Antarctic Peninsula
+TAYG,Taylor Glacier,16,Prince Charles Mountains
+TAYL,Taylor Point,3,North-west Antarctic Peninsula
+TELE,Telefon Bay (Deception Is),3,North-west Antarctic Peninsula
+TENM,Tenmondai Rock,5,Enderby Land
+TETR,Tetrad Islands,3,North-west Antarctic Peninsula
+GREE,The Green Glen,3,North-west Antarctic Peninsula
+TTOE,The Toe,3,North-west Antarctic Peninsula
+TTUR,The Turret,2,South Orkney Islands
+THOR,Thorgaut,16,Prince Charles Mountains
+TWGI,Three islands west of Gerlache Island,3,North-west Antarctic Peninsula
+TSIS,Three Sisters,3,North-west Antarctic Peninsula
+THUN,Thunder Bay,3,North-west Antarctic Peninsula
+THUR,"Thurston Glacier, Mount Siple",12,Marie Byrd Land
+TICK,Tickell Head,2,South Orkney Islands
+TORG,Torgersen Island,3,North-west Antarctic Peninsula
+TORI,Torinosu Cove,5,Enderby Land
+TOWE,Tower Island (east),3,North-west Antarctic Peninsula
+TOWW,Tower Island (west),3,North-west Antarctic Peninsula
+TRIA,Triangle Point,3,North-west Antarctic Peninsula
+TIEA,Trinity Island (east),3,North-west Antarctic Peninsula
+TINW,Trinity Island (northwest),3,North-west Antarctic Peninsula
+TISW,Trinity Island (southwest),3,North-west Antarctic Peninsula
+TIWE,Trinity Island (west),3,North-west Antarctic Peninsula
+TROW,Trowbridge Islands,3,North-west Antarctic Peninsula
+TRUA,Truant Island,3,North-west Antarctic Peninsula
+TRUN,Trundle Island,3,North-west Antarctic Peninsula
+TRYN,Tryne Islands,7,East Antarctica
+TUPI,Tupinier Island,3,North-west Antarctic Peninsula
+TURR,Turret Point (King George Island),3,North-west Antarctic Peninsula
+TXRX,Tuxen Rocks,3,North-west Antarctic Peninsula
+TWIN,Twintits Stack,3,North-west Antarctic Peninsula
+HUMM,Two Hummock Island,3,North-west Antarctic Peninsula
+TPTN,Two points north of Cape Hooker,3,North-west Antarctic Peninsula
+UCHA,Uchatka Point,3,North-west Antarctic Peninsula
+UFSI,Ufs Island,16,Prince Charles Mountains
+UMBE,Umbeashi,5,Enderby Land
+UNGE,Unger Island (Unger Rock),8,North Victoria Land
+UNN2,Unnamed 2,16,Prince Charles Mountains
+UNN7,Unnamed 7,16,Prince Charles Mountains
+UICW,Unnamed island off Cape Wallace,3,North-west Antarctic Peninsula
+UIEL,Unnamed island off Elephant Point,3,North-west Antarctic Peninsula
+UIPN,Unnamed Island PE 2 North,7,East Antarctica
+SMAT,Unnamed islands (South of Matthews Island),2,South Orkney Islands
+UIP1,Unnnamed Island PE 1,7,East Antarctica
+UIP2,Unnnamed Island PE 2,7,East Antarctica
+UIP3,Unnnamed Island PE 3,7,East Antarctica
+URUG,Uruguay Island,3,North-west Antarctic Peninsula
+USEF,Useful Island,3,North-west Antarctic Peninsula
+VAIS,Valette Island,2,South Orkney Islands
+VAPO,Vapour Col (Deception Island),3,North-west Antarctic Peninsula
+VERN,Vernadsky Station,3,North-west Antarctic Peninsula
+VESN,Vestfold North,7,East Antarctica
+VESS,Vestfold South,7,East Antarctica
+VIET,Vietor Rock,3,North-west Antarctic Peninsula
+VRNW,Vietor Rock (northwest),3,North-west Antarctic Peninsula
+VIEU,Vieugue Island,3,North-west Antarctic Peninsula
+VIEW,View Point,1,North-east Antarctic Peninsula
+VORT,Vortex Island,3,North-west Antarctic Peninsula
+WALK,Walker Point,3,North-west Antarctic Peninsula
+WATE,Waterboat Point,3,North-west Antarctic Peninsula
+WPEC,Watson Peninsula (east coast),2,South Orkney Islands
+WPWC,Watson Peninsula (west coast),2,South Orkney Islands
+WATT,Watt Bay,13,Adelie Land
+WAYA,Way Archipelago,13,Adelie Land
+WEBB,Webb Island,3,North-west Antarctic Peninsula
+WEDD,Weddell Island,2,South Orkney Islands
+WEEK,Weeks Stack,3,North-west Antarctic Peninsula
+WELC,Welcome Point,3,North-west Antarctic Peninsula
+WELL,Weller Island,3,North-west Antarctic Peninsula
+MOSS,West coast of Mossman Peninsula,2,South Orkney Islands
+WSAD,West of Saddleback Point (Penguin Island),3,North-west Antarctic Peninsula
+WHAL,Whalers Bay (Deception Is),3,North-west Antarctic Peninsula
+WIDE,Wideopen Islands,3,North-west Antarctic Peninsula
+WINW,Window Island,3,North-west Antarctic Peninsula
+WINK,Winkle Island (two islets next to Winkle Island),3,North-west Antarctic Peninsula
+WITH,Withem Island,3,North-west Antarctic Peninsula
+WOOD,Wood Bay,8,North Victoria Land
+WOOI,Wood Island,3,North-west Antarctic Peninsula
+WORL,Worlds End,3,North-west Antarctic Peninsula
+WOPT,Worley Point,12,Marie Byrd Land
+WYAT,Wyatt Earp Islands,7,East Antarctica
+YALO,Yalour Islands,3,North-west Antarctic Peninsula
+YANK,Yankee Harbor,3,North-west Antarctic Peninsula
+YOUN,Young Island,13,Adelie Land
+YTRE,Ytrehovdeholmen,5,Enderby Land
+ZAWA,Zawadski Stacks,3,North-west Antarctic Peninsula
+ZEDI,Zed Island,3,North-west Antarctic Peninsula
+ZIGZ,Zig Zag Island,3,North-west Antarctic Peninsula

@@ -1,0 +1,121 @@
+# JAGS Code
+
+```{r}
+{ 
+sink("_static/jags_model.jags")
+cat("
+
+model {
+
+acbr_region_inhabit <- c(1, 2, 3, 4, 5, 7, 8, 9, 12, 13, 14, 15, 16)
+# excluding 6, 10, 11 (no sites)
+
+for (i in 1:16) {
+  # process variance prior
+  sigma[i] ~ dnorm(0, pow(35, -2))T(0,1)
+  tau[i] <- pow(sigma[i], -2)
+  
+  # nu priors
+  nu[i] ~ dnorm(0, pow(35, -2))T(0.05,)
+  
+  # intercept prior
+  gamma[i] ~ dnorm(0, pow(2.75, -2))
+}
+
+# breeding success: chick conversion priors
+for (i in 1:chicks) {
+  alpha[i] ~ dbeta(a, b)
+}
+
+
+for (i in 1:n_sites) {
+  lz[i, s[i]] ~ dt(0, .001, 5)
+}
+
+
+# observation models
+# nests
+for (i in 1:nests) {
+  y_n[i] ~ dnorm(mu_y_n[i], precision_n[i])
+  mu_y_n[i] <- lz[site_n[i], season_n[i]]
+  y_n_new[i] ~ dnorm(mu_y_n[i], precision_n[i])
+  y_n_sq[i] <- pow((y_n[i] - mu_y_n[i]), 2)
+  y_n_sq_new[i] <- pow((y_n_new[i] - mu_y_n[i]), 2)
+}
+
+# chicks
+for (i in 1:chicks) {
+  N[i] <- 2 * round(exp(lz[site_c[i], season_c[i]]))
+  z_c[i] ~ dbin(alpha[i], N[i])
+  lz_c[i] <- log(z_c[i])
+  y_c[i] ~ dnorm(mu_y_c[i], precision_c[i])
+  mu_y_c[i] <- lz_c[i]
+  y_c_new[i] ~ dnorm(mu_y_c[i], precision_c[i])
+  y_c_sq[i] <- pow((y_c[i] - mu_y_c[i]), 2)
+  y_c_sq_new[i] <- pow((y_c_new[i] - mu_y_c[i]), 2)
+}
+
+# process model
+# growth rate    
+for (i in 1:n_sites) {
+    zr[i] <- gamma[acbr_regions[i]]
+    for (t in 1:n_seasons) {
+      lza[i, t] <- lz[i, t] * w[i, t]
+    }
+}  
+
+# initial year abundance
+for (i in 1:n_sites) {
+  y_i[i] ~ dnorm(mu_y_i[i], precision_i[i])
+  mu_y_i[i] <- lz[i, s[i]]
+  y_i_new[i] ~ dnorm(mu_y_i[i], precision_i[i])
+  y_i_sq[i] <- pow((y_i[i] - mu_y_i[i]), 2)
+  y_i_sq_new[i] <- pow((y_i_new[i] - mu_y_i[i]), 2)
+  
+}
+
+# abundance: initial year + 1 through max season
+for (i in 1:n_sites) {
+  for (t in (s[i] + 1):n_seasons) {
+    lz[i, t] ~ dt(mu_lz[i, t], tau[acbr_regions[i]], nu[acbr_regions[i]]) # fat-tailed
+    mu_lz[i, t] <- lz[i, t - 1] + zr[i]
+  }
+}
+
+# abundance: min season through intial year - 1
+for (i in 1:n_sites) {
+  for (t in 1:(s[i] - 1)) {
+    lz[i, s[i] - t] ~ dt(mu_lz[i, s[i] - t], tau[acbr_regions[i]], nu[acbr_regions[i]]) # fat-tailed
+    mu_lz[i, s[i] - t] <- lz[i, s[i] - t + 1] - zr[i]
+  }
+}
+ 
+# posterior predictive checks
+y_n_sqs <- sum(y_n_sq[])
+y_n_sqs_new <- sum(y_n_sq_new[])
+y_i_sqs <- sum(y_i_sq[])
+y_i_sqs_new <- sum(y_i_sq_new[])
+y_c_sqs <- sum(y_c_sq[])
+y_c_sqs_new <- sum(y_c_sq_new[])
+
+# derived quantities
+for (i in 1:n_sites) {
+  l_p[i] <- exp(zr[i])
+  for (t in 2:n_seasons) {
+    l_a[i, t - 1] <- exp(lz[i, t] - lz[i, t - 1])
+    lw_a[i, t - 1] <- ifelse(sum(w[i, (t-1):t]) == 2, l_a[i, t - 1], 1)
+    lw_p[i, t - 1] <- ifelse(sum(w[i, (t-1):t]) == 2, l_p[i], 1)
+  }
+}
+
+#for (i in 1:n_sites) {
+  x[i, 1:n_seasons] <- ifelse(sum(w[i, 1:n_seasons]) > 1, w[i, 1:n_seasons], #rep(1, n_seasons))
+  gl_a[i] <- ifelse(sum(w[i, 1:n_seasons]) > 1, pow(prod(lw_a[i, ]), #(1/(sum(x[i, 1:n_seasons]) - 1))), 0)
+  gl_p[i] <- ifelse(sum(w[i, 1:n_seasons]) > 1, pow(prod(lw_p[i, ]), #(1/(sum(x[i, 1:n_seasons]) - 1))), 0)
+#}
+
+}", fill = TRUE)
+sink()
+}
+```
+

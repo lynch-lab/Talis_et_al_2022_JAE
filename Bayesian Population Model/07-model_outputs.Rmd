@@ -1,0 +1,35 @@
+# MAPPPD outputs
+
+```{r, echo = TRUE}
+
+l_a_mean_sd <- cbind(
+  data.frame(MCMCsummary(model_data_rinits_output, params = "l_a", n.eff = FALSE)[, c(1, 2, 4)]),
+  w_df %>% arrange(season_relative, site) %>% dplyr::filter(season < max_season)) %>%
+  dplyr::select(site_id, season, l_a_median = X50., l_a_mean = mean, l_a_sd = sd)
+  
+lza_mean_sd <- cbind(w_df %>% arrange(season_relative, site),
+  data.frame(MCMCsummary(model_data_rinits_output, params = "lza", n.eff = FALSE)[, c(1, 2)])) %>%
+  dplyr::select(site_id, season, w_1 = w, obs_1 = known_w, lza_mean = mean, lza_sd = sd)
+
+presence_2 <- w_df %>%
+  mutate(season = season - 1) %>%
+  dplyr::select(site_id, season, w_2 = w, obs_2 = known_w)
+
+ADPE_abundance_lambda <- lza_mean_sd %>%
+  left_join(presence_2, by = c("site_id", "season")) %>%
+  left_join(l_a_mean_sd, by = c("site_id", "season")) %>%
+  left_join(SiteList, by = "site_id") %>%
+  arrange(site_id, season) %>%
+  mutate(lza_mean = replace(lza_mean, w_1 == 0, NA)) %>%
+  mutate(lza_sd = replace(lza_sd, w_1 == 0, NA)) %>%
+  mutate(l_a_mean = replace(l_a_mean, !(w_1 == 1 & w_2 == 1), NA)) %>%
+  mutate(l_a_median = replace(l_a_median, !(w_1 == 1 & w_2 == 1), NA)) %>%
+  mutate(l_a_sd = replace(l_a_sd, !(w_1 == 1 & w_2 == 1), NA)) %>%
+  mutate(id = id, species_id = species) %>%
+  dplyr::select(id, species_id, site_id, season, site_name, ccamlr_id, latitude, longitude, 
+    w_1, w_2, obs_1, obs_2, lza_mean, lza_sd, l_a_median, l_a_mean, l_a_sd)
+  
+write_csv(ADPE_abundance_lambda, file = "_static/ADPE_abundance_lambda.csv")
+save(ADPE_abundance_lambda, file = "_static/ADPE_abundance_lambda.rda")
+```
+ 

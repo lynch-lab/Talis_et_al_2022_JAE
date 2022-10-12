@@ -1,0 +1,480 @@
+# Abundance time-series
+
+
+## Antarctica
+
+```{r, echo = FALSE}
+start_season <- 1980
+end_season <- 2030 # 2020
+
+gl_a_matrix <- MCMCchains(model_data_rinits_output, params = "gl_a")
+gl_a_mean_sd <- MCMCsummary(model_data_rinits_output, params = "gl_a", n.eff = FALSE)[,c(1, 2)] 
+gl_a_quantiles <- t(apply(gl_a_matrix, 2, function(x) quantile(x, probs = c(0.1, 0.5, 0.9))))
+SiteList_lambda <- cbind(SiteList, gl_a_mean_sd, data.frame(gl_a_quantiles)) %>%
+  dplyr::mutate(label_id = paste0("<b><center>", site_id, "</b>", "<br/>", 
+    site_name, "<br/>", round(mean, 2), "</center>")) %>% 
+  dplyr::select(site_id, site_name, ccamlr_id, site, initial_season, latitude, longitude, 
+    mean, sd, gl_min = X10., gl_med = X50., gl_max = X90., label_id)
+
+za_matrix <- exp(MCMCpstr(model_data_rinits_output, params = "lza", type = "chains")[[1]])
+za_quantiles <- t(apply(apply(za_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_df <- data.frame(za_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_48_1_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "48.1")],,]
+za_48_1_quantiles <- t(apply(apply(za_48_1_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_48_1_df <- data.frame(za_48_1_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_48_2_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "48.2")],,]
+za_48_2_quantiles <- t(apply(apply(za_48_2_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_48_2_df <- data.frame(za_48_2_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_88_1_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "88.1")],,]
+za_88_1_quantiles <- t(apply(apply(za_88_1_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_88_1_df <- data.frame(za_88_1_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_88_2_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "88.2")],,]
+za_88_2_quantiles <- t(apply(apply(za_88_2_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_88_2_df <- data.frame(za_88_2_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_88_3_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "88.3")],,]
+za_88_3_quantiles <- t(apply(apply(za_88_3_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_88_3_df <- data.frame(za_88_3_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_58_4_1_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "58.4.1")],,]
+za_58_4_1_quantiles <- t(apply(apply(za_58_4_1_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_58_4_1_df <- data.frame(za_58_4_1_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_58_4_2_matrix <- za_matrix[SiteList_lambda$site[which(SiteList_lambda$ccamlr_id == "58.4.2")],,]
+za_58_4_2_quantiles <- t(apply(apply(za_58_4_2_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+za_58_4_2_df <- data.frame(za_58_4_2_quantiles) %>%
+  mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+za_reg_list <- list()
+
+for (i in 1:5) {
+  za_reg_matrix <- za_matrix[SiteList_lambda$site[which(SiteList$region == i)],,]
+  za_reg_quantiles <- t(apply(apply(za_reg_matrix, c(2, 3), sum), 1, quantile, probs = c(.1, .25, .5, .75, .9)))
+  za_reg_list[[i]] <- data.frame(za_reg_quantiles) %>%
+    mutate(season_relative = 1:n(), season = min_season + season_relative - 1) %>%
+    dplyr::filter(season >= start_season & season <= end_season)
+}
+
+lza_matrix <- MCMCchains(model_data_rinits_output, params = "lza")
+lza_quantiles <- t(apply(lza_matrix, 2, quantile, probs = c(.1, .25, .5, .75, .9)))
+lza_df <- cbind(data.frame(lza_quantiles, w_template)) %>%
+  dplyr::filter(season >= start_season & season <= end_season)
+
+lz_c_matrix <- MCMCchains(model_data_rinits_output, params = "lz_c")
+lz_c_quantiles <- t(apply(lz_c_matrix, 2, function(x) quantile(x, probs = c(0.1, 0.5, 0.9))))
+
+abundance_chicks <- cbind(abundance_chicks, data.frame(lz_c_quantiles)) %>%
+  rename(q_min = X10., q_med = X50., q_max = X90.)
+
+asd_mask <- sf::st_as_sf(CCAMLRGIS::load_ASDs()) %>%
+  dplyr::select(ccamlr_id = GAR_Name) %>%
+  sf::st_transform(4326)
+mpa_mask <- sf::st_as_sf(CCAMLRGIS::load_MPAs()) %>%
+  dplyr::select(mpa_id = GAR_Name) %>%
+  sf::st_transform(4326)
+land_mask <- sf::st_as_sf(CCAMLRGIS::load_Coastline()) %>%
+  dplyr::select(layer) %>%
+  dplyr::filter(layer == "coastline") %>%
+  sf::st_transform(4326)
+
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all 109 Adélie breeding sites in Antarctica from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL) +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))  
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 8, echo = FALSE, message = FALSE, fig.cap = "Interquartile range of above boxplots vs. season"}
+
+ggplot(IQR_df, aes(x = season, y = IQR)) +
+    geom_point(color = "#9D5A6C") +
+    labs(y = "interquartile range\n", x = NULL)
+```  
+
+
+## CCAMLR sub area
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 48.1 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_48_1_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "48.1") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))  
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 48.2 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_48_2_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "48.2") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 88.1 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_88_1_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "88.1") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 88.2 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_88_2_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "88.2") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 88.3 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_88_3_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "88.3") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 58.4.1 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_58_4_1_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "58.4.1") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 58.4.2 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_58_4_2_df, aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "58.4.2") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+## Region
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in Central-west and Northwest Antarctic Peninsula from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_reg_list[[1]], aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "Central-west and Northwest Antarctic Peninsula") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in Southwest Antarctic Peninsula and Palmer Land from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_reg_list[[2]], aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "Southwest Antarctic Peninsula and Palmer Land") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in Elephant Island, South Orkney Islands, and South Shetland Islands from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_reg_list[[3]], aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "Elephant Island, South Orkney Islands, and South Shetland Islands") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in Northeast Antarctic Peninsula from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_reg_list[[4]], aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "Northeast Antarctic Peninsula") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+```{r, echo = FALSE, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, fig.cap = "Summed latent Adélie nest abundances by season for all Adélie breeding sites in CCAMLR sub area 88.1 and 88.2 from 1980-2020. Abundance posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals."}
+
+ggplot(data = za_reg_list[[5]], aes(x = season, group = season)) +
+  geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+  width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+  labs(y = "nest abudance\n", x = NULL, title = "CCAMLR sub area 88.1 and 88.2") +
+  guides(fill = FALSE, color = FALSE) +
+  theme_minimal() +
+  theme(text = element_text(size = 15))   
+```  
+
+
+## Site-level
+
+```{r, fig.align = TRUE, fig.width = 10, fig.height = 10, echo = FALSE, message = FALSE, fig.cap = "Map displaying posterior distributions means for site-level average latent nest abundance population growth rate multipliers. For each site, this was computed as the geometric mean of the ratios of latent nest abundance in year t + 1 to year t for all seasons breeding occurred between 1970 and 2020."}
+
+tile_url <- "https://overlord.pgc.umn.edu/arcgis/rest/services/imagery/ant_pgc_composite_mosaic/MapServer"
+
+# define 3031 leaflet CRS
+# resolution, origin, and bounds taken from LIMA metadata found at PGC WMS MapServer url (tile_url)
+crs_3031 <- leaflet::leafletCRS(
+  crsClass = 'L.Proj.CRS',
+  code = 'EPSG:3031',
+  proj4def = '+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs',
+  resolutions = c(32000.000000000004, 16000.000000000002, 8000.000000000001, 4000.0000000000005, 2000.0000000000002,
+    1000.0000000000001, 500.00000000000006, 250.00000000000003, 120.00000000000001, 60.00000000000001, 30.000000000000004,
+    15.000000000000002, 8, 4, 2, 1, .5),
+  origin = c(-30636100, 30636099.999999993),
+  bounds =  list( c(-3000000, 4000005.0001000017), c(3000000.0001, -3000000)))
+
+# set color palettes for asd and mpa layers
+factpal_asd <- leaflet::colorFactor(grDevices::topo.colors(base::nrow(asd_mask)), as.factor(asd_mask$ccamlr_id))
+factpal_mpa <- leaflet::colorFactor(grDevices::hcl.colors(base::nrow(mpa_mask)), as.factor(mpa_mask$mpa_id))
+pal <- colorNumeric(palette = "magma", domain = range(SiteList_lambda$mean, na.rm = TRUE))
+
+leaflet::leaflet(
+  options = leaflet::leafletOptions(
+    crs = crs_3031,
+    # min and max Zoom control the lowest (most zoomed out) and highest zoom level permitted
+    # these values were set using the number of resolutions available for LIMA
+    minZoom = 1,
+    maxZoom = 16,
+    # zoomSnap controls how small you can define the zoom level
+    zoomSnap = 0.25,
+    # zoomDelta controls how much the view zooms when clicking zoom control buttons
+    zoomDelta = 0.5,
+    # not sure if this matters but set to false it seemed to have weird behavior with sites
+    # on islands outside of LIMA
+    worldCopyJump = TRUE)) %>%
+  # sets the long, lat, and starting zoom
+  # zoom set to just show antarctica S of 60 S latitude on a 15 inch laptop screen
+  leaflet::setView(0, -90, 2.25) %>%
+  leaflet::addScaleBar(position = c("bottomleft")) %>%
+  # add the land mask first
+  leaflet::addPolygons(data = land_mask,
+    color = "black",
+    weight = 1,
+    opacity = 1.0,
+    fillOpacity = 0.5,
+    fillColor = "lightgray",
+    group = "CCAMLR Coastline") %>%
+  # add ccamlr subareas
+  leaflet::addPolygons(data = asd_mask,
+    color = "black",
+    weight = 1,
+    opacity = 1.0,
+    fillOpacity = 0.15,
+    popup = asd_mask$ccamlr_id,
+    fillColor = ~factpal_asd(ccamlr_id),
+    group = "CCAMLR Statistical Areas and Divisions") %>%
+  # add mpas
+  leaflet::addPolygons(data = mpa_mask,
+    color = "black",
+    weight = 1,
+    opacity = 1.0,
+    fillOpacity = 0.15,
+    popup = mpa_mask$mpa_id,
+    fillColor = ~factpal_mpa(mpa_id),
+    group = "CCAMLR Marine Protected Areas (MPA)") %>%
+  # add Landsat Image Mosaic Of Antarctica (LIMA) WMS tile
+  leaflet.esri::addEsriTiledMapLayer(tile_url, group = "Landsat Image Mosaic Of Antarctica (LIMA)") %>%
+  # add penguin colonies
+  leaflet::addCircleMarkers(
+    data = SiteList_lambda,
+    popup = SiteList_lambda$label_id,
+    color = ~pal(SiteList_lambda$mean),
+    group = "MAPPPD Penguin Colonies",
+    clusterId = "ColonyClusters") %>%
+  # specify groups and hide the CCAMLR ADD and MPA groups
+  leaflet::addLayersControl(
+    overlayGroups = c("CCAMLR Coastline", "CCAMLR Statistical Areas and Divisions", "CCAMLR Marine Protected Areas (MPA)",
+      "Landsat Image Mosaic Of Antarctica (LIMA)", "MAPPPD Penguin Colonies"),
+    options = leaflet::layersControlOptions(collapsed = FALSE)) %>%
+  leaflet::hideGroup(c("CCAMLR Statistical Areas and Divisions", "CCAMLR Marine Protected Areas (MPA)", 
+    "Landsat Image Mosaic Of Antarctica (LIMA)")) %>%
+ # add zoom out button
+  leaflet::addEasyButton(
+    leaflet::easyButton(
+      icon = "fa-globe",
+      title = "Zoom Out",
+      onClick = htmlwidgets::JS("function(btn, map){ map.setView([-90, 0], 2.25); }")
+    )
+  ) 
+```
+
+```{r, echo = FALSE}
+
+plot_site <- function(focal_site) {
+  
+  focal_site_df <- SiteList_lambda %>% dplyr::filter(site == focal_site)
+  lza_focal_site_df <- lza_df %>% dplyr::filter(site == focal_site)
+  nests <- rbind(abundance_nests, abundance_initial) %>% 
+    dplyr::filter(site == focal_site & season >= start_season & season <= end_season)
+  chicks <- abundance_chicks %>% 
+    dplyr::filter(site == focal_site & season >= start_season & season <= end_season)
+  plot_title <- paste(focal_site_df$site_id, focal_site_df$site_name, focal_site_df$ccamlr, sep = ", ")
+  plot_subtitle <- paste0("mean population growth multliplier = ", round(focal_site_df$mean, 3), " (", 
+    round(focal_site_df$gl_min, 2), " - ", round(focal_site_df$gl_max, 2), ")")
+
+  if (nrow(chicks) > 0) {
+    p <- ggplot(data = lza_focal_site_df, aes(x = season, group = season)) +
+      geom_point(data = chicks, aes(x = season + .5, y = q_med)) +
+      geom_errorbar(data = chicks, aes(ymin = q_min, ymax = q_max, x = season + .5, y = q_med), width = .2) +
+      geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+        width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+      geom_point(data = nests, aes(x = season, y = log(count)), size = 5, alpha = 0.5, color = "blue") +
+      geom_point(data = chicks, aes(x = season + .5, y = log(count)), size = 5, alpha = 0.5, color = "#9D5A6C") +
+      labs(y = "logged abudance\n", x = NULL, title = plot_title, subtitle = plot_subtitle) +
+      guides(fill = FALSE, color = FALSE) +
+      theme_minimal() +
+      theme(text = element_text(size = 15))
+  } else {
+    p <- ggplot(data = lza_focal_site_df, aes(x = season, group = season)) +
+      geom_boxplot(aes(ymin = X10., lower = X25., middle = X50., upper = X75., ymax = X90.), stat = "identity",
+        width = 0.5, outlier.shape = NA, alpha = 0.8, fill = "#EBB261") +
+      geom_point(data = nests, aes(x = season, y = log(count)), size = 5, alpha = 0.5, color = "blue") +
+      labs(y = "logged abudance\n", x = NULL, title = plot_title, subtitle = plot_subtitle) +
+      guides(fill = FALSE, color = FALSE) +
+      theme_minimal() +
+      theme(text = element_text(size = 15))      
+  }
+  return(p)
+}
+```
+
+```{r, echo = FALSE}
+
+plot_site_IQR <- function(focal_site) {
+  
+  focal_site_df <- SiteList_lambda %>% dplyr::filter(site == focal_site)
+  lza_focal_site_df <- lza_df %>% dplyr::filter(site == focal_site)
+  IQR_focal_site_df <- data.frame("IQR" = lza_focal_site_df[,4]-lza_focal_site_df[,2], "season" =
+                                    lza_focal_site_df[,9])
+  nests <- rbind(abundance_nests, abundance_initial) %>% 
+    dplyr::filter(site == focal_site & season >= start_season & season <= end_season)
+  chicks <- abundance_chicks %>% 
+    dplyr::filter(site == focal_site & season >= start_season & season <= end_season)
+  plot_title <- paste(focal_site_df$site_id, focal_site_df$site_name, focal_site_df$ccamlr, sep = ", ")
+  
+  p <- ggplot(IQR_focal_site_df, aes(x = season, y = IQR)) +
+    geom_point(color = "#9D5A6C") +
+    labs(y = "interquartile range, logged abundance\n", x = NULL, title = plot_title)
+      
+  return(p)
+}
+```
+
+<br>
+
+```{r, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, results = "asis", fig.cap = "Logged latent and observed nest and chick abundance by site and season from 1980-2020. Nest abundances posterior distributions are represented with boxplots showing the median, 25-75%, and 10-90% (whiskers) credible intervals. Chick abundance posterior distributions are represented with lines for median and error bars for 90% equal-tailed credible intervals. The blue (red) dots represent observed logged nest (chick) counts. For each site we report the average latent nest abundance population growth rate multipliers. This was computed as the geometric mean of the ratios of latent nest abundance in year t + 1 to year t for all seasons breeding occurred 1970 and 2020. Note that observed and latent chick abundances are not available for all sites."}
+
+for(i in 1:nrow(SiteList_lambda)) {
+  print(plot_site(focal_site = i))
+}
+
+```
+
+```{r, fig.align = TRUE, fig.width = 12, echo = FALSE, message = FALSE, results = "asis", fig.cap = "IQR vs. season"}
+
+for(i in 1:nrow(SiteList_lambda)) {
+  print(plot_site_IQR(focal_site = i))
+}
+```
+
+# Distributions for Abundance
+
+## Site/Years with new data
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "BRDM, 2018"}
+MCMCtrace(model_data_rinits_output, params = c("lz[36,49]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.75), xlim = c(6, 14))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "BRDS, 2018"}
+MCMCtrace(model_data_rinits_output, params = c("lz[38,49]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.75), xlim = c(6, 14))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "ROYD, 2018"}
+MCMCtrace(model_data_rinits_output, params = c("lz[210,49]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.75), xlim = c(4, 12))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "ARDL, 2019"}
+MCMCtrace(model_data_rinits_output, params = c("lz[13,50]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.95), xlim = c(0, 8))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "CHAL, 2019"}
+MCMCtrace(model_data_rinits_output, params = c("lz[46,50]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.75), xlim = c(6, 14))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "INEX, 2019"}
+MCMCtrace(model_data_rinits_output, params = c("lz[126,50]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.75), xlim = c(6, 14))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "PETE, 2020"}
+MCMCtrace(model_data_rinits_output, params = c("lz[189,51]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.95), xlim = c(0, 8))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "YALO, 2020"}
+MCMCtrace(model_data_rinits_output, params = c("lz[270,51]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 0.75), xlim = c(4, 12))
+```
+
+## Site/Years with high PPL
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "ADAM, 2009"}
+MCMCtrace(model_data_rinits_output, params = c("lz[2,40]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 1), xlim = c(0, 8))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "RBSN, 2005"}
+MCMCtrace(model_data_rinits_output, params = c("lz[204,36]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 1), xlim = c(4, 12))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "RBSN, 2006"}
+MCMCtrace(model_data_rinits_output, params = c("lz[204,37]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 1), xlim = c(4, 12))
+```
+
+```{r, echo = FALSE, fig.align = TRUE, fig.cap = "WPEC, 2010"}
+MCMCtrace(model_data_rinits_output, params = c("lz[268,41]"), ISB = FALSE, exact = TRUE, ind = TRUE, pdf = FALSE, ylim = c(0, 1), xlim = c(4, 12))
+```
