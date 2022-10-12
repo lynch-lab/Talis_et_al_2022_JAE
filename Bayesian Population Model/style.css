@@ -1,0 +1,32 @@
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
+
+body {
+  text-align: justify;
+}
+
+.book .book-body .page-wrapper .page-inner {
+  max-width: 80%;
+}
+
+p.caption {
+  font-size: 0.9em;
+  font-style: italic;
+  color: grey;
+  margin-right: 5%;
+  margin-left: 5%;  
+  text-align: justify;
+}
+</style>
